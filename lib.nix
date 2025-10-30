@@ -207,13 +207,12 @@ let
               _moduleSettings = lib.mkOption {
                 type = lib.types.raw;
                 internal = true;
-                readOnly = true;
                 description = ''
                   Internal option storing the settings module passed to apply.
-                  Used by extend to re-evaluate with additional modules.
+                  Used by apply to re-evaluate with additional modules.
                 '';
               };
-              extend = lib.mkOption {
+              apply = lib.mkOption {
                 type = lib.types.functionTo lib.types.raw;
                 readOnly = true;
                 description = ''
@@ -222,15 +221,20 @@ let
                 '';
                 default =
                   module:
-                  let
-                    configuration = eval {
-                      imports = [
-                        config._moduleSettings
-                        module
-                      ];
-                    };
-                  in
-                  configuration.config.result.config;
+                  (evaled.extendModules {
+                    modules = [
+                      config._moduleSettings
+                      module
+                      {
+                        _moduleSettings = lib.mkForce {
+                          imports = [
+                            config._moduleSettings
+                            module
+                          ];
+                        };
+                      }
+                    ];
+                  }).config;
               };
             };
           }
@@ -239,53 +243,18 @@ let
       eval =
         settings:
         lib.evalModules {
-          modules = [
-            (
-              { config, ... }:
-              {
-                options.interface = lib.mkOption {
-                  type = lib.types.deferredModule;
-                  default = moduleInterface;
-                };
-                options.settings = lib.mkOption {
-                  type = lib.types.deferredModule;
-                  default = settings;
-                };
-                options.result = lib.mkOption {
-                  type = lib.types.deferredModule;
-                  apply =
-                    v:
-                    (lib.evalModules {
-                      modules = [ v ];
-                      specialArgs = {
-                        wlib = wrapperLib;
-                      };
-                    });
-                  default = {
-                    imports = staticModules ++ [
-                      config.interface
-                      config.settings
-                      { _moduleSettings = config.settings; }
-                    ];
-                  };
-                };
-              }
-            )
+          modules = staticModules ++ [
+            moduleInterface
+            settings
+            { _moduleSettings = settings; }
           ];
+          specialArgs = {
+            wlib = wrapperLib;
+          };
         };
+      evaled = eval { };
     in
-    {
-      # expose options to generate documentation of available modules
-      options = (eval { }).config.result.options;
-      apply =
-        settings:
-        let
-          # Result of eval modules is a 'configuration' with options, config
-          configuration = eval settings;
-          config = configuration.config.result.config;
-        in
-        config;
-    };
+    evaled.config;
 
   /**
     Create a wrapped application that preserves all original outputs (man pages, completions, etc.)

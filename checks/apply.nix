@@ -22,13 +22,13 @@ let
   };
 
   # Extend the configuration
-  extendedConfig = initialConfig.extend {
+  extendedConfig = initialConfig.apply {
     flags."--greeting" = "extended";
     flags."--extra" = "flag";
   };
 
   # Test mkForce to override a value
-  forcedConfig = initialConfig.extend (
+  forcedConfig = initialConfig.apply (
     { lib, ... }:
     {
       flags."--greeting" = lib.mkForce "forced";
@@ -36,19 +36,32 @@ let
     }
   );
 
-  # Test extending via wrapper.passthru.configuration.extend
-  passthruExtendedConfig = initialConfig.wrapper.passthru.configuration.extend {
+  # Test extending via wrapper.passthru.configuration.apply
+  passthruExtendedConfig = initialConfig.wrapper.passthru.configuration.apply {
     flags."--passthru" = "test";
+  };
+
+  # Test chaining apply multiple levels deep
+  doubleApply = extendedConfig.apply {
+    flags."--greeting" = "double";
+    flags."--double" = "level2";
+  };
+
+  tripleApply = doubleApply.apply {
+    flags."--greeting" = "triple";
+    flags."--triple" = "level3";
   };
 
 in
 pkgs.runCommand "extend-test" { } ''
-  echo "Testing extend function..."
+  echo "Testing apply function..."
 
   initialScript="${initialConfig.wrapper}/bin/hello"
   extendedScript="${extendedConfig.wrapper}/bin/hello"
   forcedScript="${forcedConfig.wrapper}/bin/hello"
   passthruExtendedScript="${passthruExtendedConfig.wrapper}/bin/hello"
+  doubleScript="${doubleApply.wrapper}/bin/hello"
+  tripleScript="${tripleApply.wrapper}/bin/hello"
 
   # Check initial config has initial greeting
   if ! grep -q "initial" "$initialScript"; then
@@ -78,7 +91,7 @@ pkgs.runCommand "extend-test" { } ''
     exit 1
   fi
 
-  # Check extended config has extra flag (from extend)
+  # Check extended config has extra flag (from apply)
   if ! grep -q -- "--extra" "$extendedScript"; then
     echo "FAIL: extended config should have --extra flag"
     cat "$extendedScript"
@@ -106,7 +119,7 @@ pkgs.runCommand "extend-test" { } ''
     exit 1
   fi
 
-  # Check passthru.configuration.extend works
+  # Check passthru.configuration.apply works
   if ! grep -q -- "--passthru" "$passthruExtendedScript"; then
     echo "FAIL: passthru extended config should have --passthru flag"
     cat "$passthruExtendedScript"
@@ -120,6 +133,64 @@ pkgs.runCommand "extend-test" { } ''
     exit 1
   fi
 
-  echo "SUCCESS: extend test passed"
+  # Check double apply - greeting should be "double" (not "extended")
+  if ! grep -q "double" "$doubleScript"; then
+    echo "FAIL: double apply should have 'double' greeting"
+    cat "$doubleScript"
+    exit 1
+  fi
+
+  # Check double apply preserves all previous flags
+  if ! grep -q -- "--verbose" "$doubleScript"; then
+    echo "FAIL: double apply should preserve --verbose from initial"
+    cat "$doubleScript"
+    exit 1
+  fi
+
+  if ! grep -q -- "--extra" "$doubleScript"; then
+    echo "FAIL: double apply should preserve --extra from extended"
+    cat "$doubleScript"
+    exit 1
+  fi
+
+  if ! grep -q -- "--double" "$doubleScript"; then
+    echo "FAIL: double apply should have --double flag"
+    cat "$doubleScript"
+    exit 1
+  fi
+
+  # Check triple apply - greeting should be "triple" (newest wins)
+  if ! grep -q "triple" "$tripleScript"; then
+    echo "FAIL: triple apply should have 'triple' greeting"
+    cat "$tripleScript"
+    exit 1
+  fi
+
+  # Check triple apply preserves all previous flags
+  if ! grep -q -- "--verbose" "$tripleScript"; then
+    echo "FAIL: triple apply should preserve --verbose"
+    cat "$tripleScript"
+    exit 1
+  fi
+
+  if ! grep -q -- "--extra" "$tripleScript"; then
+    echo "FAIL: triple apply should preserve --extra"
+    cat "$tripleScript"
+    exit 1
+  fi
+
+  if ! grep -q -- "--double" "$tripleScript"; then
+    echo "FAIL: triple apply should preserve --double"
+    cat "$tripleScript"
+    exit 1
+  fi
+
+  if ! grep -q -- "--triple" "$tripleScript"; then
+    echo "FAIL: triple apply should have --triple flag"
+    cat "$tripleScript"
+    exit 1
+  fi
+
+  echo "SUCCESS: apply test passed (including multi-level chaining)"
   touch $out
 ''
