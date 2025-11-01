@@ -48,12 +48,18 @@ wlib.wrapModule (
           <https://github.com/emersion/mako/blob/master/doc/mako.5.scd>.
         '';
       };
+      extraFlags = lib.mkOption {
+        type = lib.types.attrsOf lib.types.unspecified; # TODO add list handling
+        default = { };
+        description = "Extra flags to pass to mako.";
+      };
     };
 
     config.flagSeparator = "=";
     config.flags = {
       "--config" = settings;
-    };
+    }
+    // config.extraFlags;
 
     config.package = lib.mkDefault config.pkgs.mako;
   }
