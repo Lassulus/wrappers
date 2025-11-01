@@ -6,31 +6,10 @@
 wlib.wrapModule (
   { config, wlib, ... }:
   let
-    generateConfig =
-      config:
-      let
-        formatValue = v: if builtins.isBool v then if v then "true" else "false" else toString v;
-
-        globalSettings = lib.filterAttrs (n: v: !(lib.isAttrs v)) config;
-        sectionSettings = lib.filterAttrs (n: v: lib.isAttrs v) config;
-
-        globalLines = lib.concatStringsSep "\n" (
-          lib.mapAttrsToList (k: v: "${k}=${formatValue v}") globalSettings
-        );
-
-        formatSection =
-          name: attrs:
-          "\n[${name}]\n"
-          + lib.concatStringsSep "\n" (lib.mapAttrsToList (k: v: "${k}=${formatValue v}") attrs);
-
-        sectionLines = lib.concatStringsSep "\n" (lib.mapAttrsToList formatSection sectionSettings);
-      in
-      if sectionSettings != { } then globalLines + "\n" + sectionLines + "\n" else globalLines + "\n";
-
-    iniFormat = config.pkgs.formats.ini { };
+    iniFormat = config.pkgs.formats.iniWithGlobalSection { };
     iniAtomType = iniFormat.lib.types.atom;
 
-    settings = config.pkgs.writeText "mako-settings" (generateConfig config.settings);
+    settings = iniFormat.generate "mako-settings" { globalSection = config.settings; };
   in
   {
     options = {
