@@ -24,5 +24,13 @@ wlib.wrapModule (
     };
 
     config.package = lib.mkDefault config.pkgs.nushell;
+
+    config.meta.maintainers = [
+      {
+        name = "altacountbabi";
+        github = "altacountbabi";
+        githubId = 82091823;
+      }
+    ];
   }
 )
