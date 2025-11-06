@@ -37,5 +37,6 @@ wlib.wrapModule (
         scripts = config.scripts;
       }
     );
+    config.meta.maintainers = [ lib.maintainers.lassulus ];
   }
 )

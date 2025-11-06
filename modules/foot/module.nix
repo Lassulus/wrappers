@@ -28,5 +28,7 @@ wlib.wrapModule (
     }
     // config.extraFlags;
     config.package = lib.mkDefault config.pkgs.foot;
+    config.meta.maintainers = [ lib.maintainers.randomdude ];
+    config.meta.platforms = lib.platforms.linux;
   }
 )

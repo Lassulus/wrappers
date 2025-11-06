@@ -30,5 +30,7 @@ wlib.wrapModule (
     }
     // config.extraFlags;
     config.package = lib.mkDefault config.pkgs.fuzzel;
+    config.meta.maintainers = [ lib.maintainers.zimward ];
+    config.meta.platforms = lib.platforms.linux;
   }
 )
