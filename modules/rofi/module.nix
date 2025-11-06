@@ -112,6 +112,17 @@ wlib.wrapModule (
   in
   {
     options = {
+      "config.rasi" = lib.mkOption {
+        type = wlib.types.file config.pkgs;
+        default.content =
+          toRasi {
+            configuration = config.settings;
+          }
+          + (lib.optionalString (theme != null) (toRasi {
+            "@theme" = theme;
+          }));
+      };
+
       settings = lib.mkOption {
         type = configType;
         default = {
@@ -145,16 +156,7 @@ wlib.wrapModule (
     };
 
     config.flags = {
-      "-config" = config.pkgs.writeTextFile {
-        name = "rofi-config";
-        text =
-          toRasi {
-            configuration = config.settings;
-          }
-          + (lib.optionalString (theme != null) (toRasi {
-            "@theme" = theme;
-          }));
-      };
+      "-config" = config."config.rasi".path;
     }
     // config.extraFlags;
 

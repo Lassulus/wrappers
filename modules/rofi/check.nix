@@ -19,7 +19,7 @@ pkgs.runCommand "rofi-test" { } ''
 
   res=$("${rofiWrapped}/bin/rofi" --help)
 
-  if ! echo "$res" | grep -q '/nix/store/.*-rofi-config'; then
+  if ! echo "$res" | grep -q '/nix/store/.*-config.rasi'; then
     echo "Rofi doesn't see config"
     touch $out
     exit 1
