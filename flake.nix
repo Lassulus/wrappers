@@ -4,13 +4,7 @@
   outputs =
     { self, nixpkgs }:
     let
-      systems = [
-        "x86_64-linux"
-        "aarch64-linux"
-        "x86_64-darwin"
-        "aarch64-darwin"
-      ];
-      forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system);
+      forAllSystems = f: nixpkgs.lib.genAttrs nixpkgs.lib.platforms.all (system: f system);
     in
     {
       lib = import ./lib.nix { lib = nixpkgs.lib; };
@@ -45,8 +39,10 @@
             name: type:
             let
               checkPath = ./modules + "/${name}/check.nix";
+              # Check if current system is in the module's supported platforms
+              isSupported = builtins.elem system self.wrapperModules.${name}.meta.platforms;
             in
-            if type == "directory" && builtins.pathExists checkPath then
+            if type == "directory" && builtins.pathExists checkPath && isSupported then
               {
                 name = "module-${name}";
                 value = import checkPath {
