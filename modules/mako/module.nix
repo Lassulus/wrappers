@@ -41,5 +41,14 @@ wlib.wrapModule (
     // config.extraFlags;
 
     config.package = lib.mkDefault config.pkgs.mako;
+
+    config.meta.maintainers = [
+      {
+        name = "altacountbabi";
+        github = "altacountbabi";
+        githubId = 82091823;
+      }
+    ];
+    config.meta.platforms = lib.platforms.linux;
   }
 )
