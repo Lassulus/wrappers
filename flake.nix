@@ -8,10 +8,14 @@
     in
     {
       lib = import ./lib.nix { lib = nixpkgs.lib; };
-      wrapperModules = import ./modules.nix {
-        lib = nixpkgs.lib;
-        wlib = self.lib;
-      };
+      wrapperModules =
+        let
+          lib = nixpkgs.lib;
+          wlib = self.lib;
+        in
+        lib.mapAttrs' (
+          name: type: lib.nameValuePair name (import ./modules/${name}/module.nix { inherit wlib lib; })
+        ) (lib.filterAttrs (_: type: type == "directory") (builtins.readDir ./modules));
       formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-tree);
       checks = forAllSystems (
         system:
