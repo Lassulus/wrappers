@@ -29,5 +29,6 @@ wlib.wrapModule (
     }
     // config.extraFlags;
     config.package = lib.mkDefault config.pkgs.alacritty;
+    config.meta.maintainers = [ lib.maintainers.zimward ];
   }
 )

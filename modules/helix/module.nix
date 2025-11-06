@@ -103,5 +103,6 @@ wlib.wrapModule (
         )
       );
     };
+    config.meta.maintainers = [ lib.maintainers.zimward ];
   }
 )
