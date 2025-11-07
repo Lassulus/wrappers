@@ -1,0 +1,1 @@
+{ wlib, ... }: wlib.wrapModule ./.
