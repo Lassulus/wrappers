@@ -8,11 +8,14 @@ wlib.wrapModule (
   let
     iniFormat = config.pkgs.formats.iniWithGlobalSection { };
     iniAtomType = iniFormat.lib.types.atom;
-
-    settings = iniFormat.generate "mako-settings" { globalSection = config.settings; };
   in
   {
     options = {
+      "config" = lib.mkOption {
+        type = wlib.types.file config.pkgs;
+        default.path = iniFormat.generate "mako-settings" { globalSection = config.settings; };
+      };
+
       settings = lib.mkOption {
         type = lib.types.attrsOf (
           lib.types.oneOf [
@@ -36,7 +39,7 @@ wlib.wrapModule (
 
     config.flagSeparator = "=";
     config.flags = {
-      "--config" = settings;
+      "--config" = config."config".path;
     }
     // config.extraFlags;
 
