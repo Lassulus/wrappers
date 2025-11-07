@@ -6,6 +6,28 @@
 wlib.wrapModule (
   { config, wlib, ... }:
   let
+    nvimPlugin = lib.types.either lib.types.package (
+      lib.types.submodule {
+        options = {
+          plugin = lib.mkPackageOption config.pkgs.vimPlugins "plugin" {
+            default = null;
+            example = "pkgs.vimPlugins.nvim-treesitter";
+            pkgsText = "pkgs.vimPlugins";
+          };
+
+          config = lib.mkOption {
+            type = lib.types.nullOr lib.types.lines;
+            description = "Script to configure this plugin. The scripting language should match type.";
+            default = null;
+          };
+
+          optional = lib.mkEnableOption "optional" // {
+            description = "Don't load by default (load with :packadd)";
+          };
+        };
+      }
+    );
+
     rcDir = if lib.pathIsDirectory config.rc.path then config.rc.path else dirOf config.rc.path;
     nvimRtp = config.pkgs.stdenv.mkDerivation {
       name = "nvim-rtp";
@@ -34,28 +56,6 @@ wlib.wrapModule (
         fi
       '';
     };
-
-    nvimPlugin = lib.types.either lib.types.package (
-      lib.types.submodule {
-        options = {
-          plugin = lib.mkPackageOption config.pkgs.vimPlugins "plugin" {
-            default = null;
-            example = "pkgs.vimPlugins.nvim-treesitter";
-            pkgsText = "pkgs.vimPlugins";
-          };
-
-          config = lib.mkOption {
-            type = lib.types.nullOr lib.types.lines;
-            description = "Script to configure this plugin. The scripting language should match type.";
-            default = null;
-          };
-
-          optional = lib.mkEnableOption "optional" // {
-            description = "Don't load by default (load with :packadd)";
-          };
-        };
-      }
-    );
 
     normalizedPlugins = config.pkgs.neovimUtils.normalizePlugins config.plugins;
     myVimPackage = config.pkgs.neovimUtils.normalizedPluginsToVimPackage normalizedPlugins;
@@ -96,6 +96,7 @@ wlib.wrapModule (
         type = wlib.types.file config.pkgs;
         description = ''
           Your neovim rc.
+          Can either be a string or the path to a nvim directory, in which case the entire directory gets wrapped.
         '';
       };
 
