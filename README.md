@@ -19,8 +19,8 @@ Watch this excellent Video by Vimjoyer for an explanation:
 
 This library provides two main components:
 
-- `lib.wrapPackage`: Low-level function to wrap packages with additional flags, environment variables, and runtime dependencies
-- `lib.wrapModule`: High-level function to create reusable wrapper modules with type-safe configuration options
+- `lib.wrapModule`: Function to create reusable wrapper modules with type-safe configuration options
+  - And related, `lib.wrapPackage`: an alias for `(wrapModule ...).wrapper`
 - `wrapperModules`: Pre-built wrapper modules for common packages (mpv, notmuch, etc.)
 
 ## Usage
@@ -33,7 +33,7 @@ This library provides two main components:
 
   outputs = { self, nixpkgs, wrappers }: {
     packages.x86_64-linux.default =
-      (wrappers.wrapperModules.mpv.apply {
+      wrappers.wrapperModules.mpv.wrap {
         pkgs = nixpkgs.legacyPackages.x86_64-linux;
         scripts = [ pkgs.mpvScripts.mpris ];
         "mpv.conf".content = ''
@@ -44,33 +44,8 @@ This library provides two main components:
           WHEEL_UP seek 10
           WHEEL_DOWN seek -10
         '';
-      }).wrapper;
+      };
   };
-}
-```
-
-### Using wrapPackage Directly
-
-```nix
-{ pkgs, wrappers, ... }:
-
-wrappers.lib.wrapPackage {
-  inherit pkgs;
-  package = pkgs.curl;
-  runtimeInputs = [ pkgs.jq ];
-  env = {
-    CURL_CA_BUNDLE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
-  };
-  flags = {
-    "--silent" = {};
-    "--connect-timeout" = "30";
-  };
-  # Or use args directly for more control:
-  # args = [ "--silent" "--connect-timeout" "30" ];
-  flagSeparator = "=";  # Use --flag=value instead of --flag value (default is " ")
-  preHook = ''
-    echo "Making request..." >&2
-  '';
 }
 ```
 
@@ -103,40 +78,55 @@ wlib.wrapModule ({ config, wlib, ... }: {
 })
 ```
 
+```nix
+{ pkgs, wrappers, ... }:
+
+(wrappers.lib.wrapModule {
+  inherit pkgs;
+  package = pkgs.curl;
+  extraPackages = [ pkgs.jq ];
+  env = {
+    CURL_CA_BUNDLE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+  };
+  flags = {
+    "--silent" = {};
+    "--connect-timeout" = "30";
+  };
+  # Or use args for more control:
+  # args = [ "--silent" "--connect-timeout" "30" ];
+  flagSeparator = "=";  # Use --flag=value instead of --flag value (default is " ")
+  wrap.args."--run" = ''
+    echo "Making request..." >&2
+  '';
+}).wrapper # to get the package out of the module
+```
+
 ## Technical Details
-
-### wrapPackage Function
-
-Arguments:
-- `pkgs`: nixpkgs instance
-- `package`: Base package to wrap
-- `runtimeInputs`: List of packages added to PATH (default: `[]`)
-- `env`: Attribute set of environment variables (default: `{}`)
-- `flags`: Attribute set of command-line flags (default: `{}`)
-  - Value `{}`: Flag without argument (e.g., `--verbose`)
-  - Value `"string"`: Flag with argument (e.g., `--output "file.txt"`)
-  - Value `false` or `null`: Flag omitted
-- `flagSeparator`: Separator between flag name and value when generating args from flags (default: `" "`, can be `"="`)
-- `args`: List of command-line arguments like argv in execve (default: auto-generated from `flags`)
-  - Example: `[ "--silent" "--connect-timeout" "30" ]`
-  - If provided, overrides automatic generation from `flags`
-- `preHook`: Shell script executed before the command (default: `""`)
-- `passthru`: Additional attributes for the derivation's passthru (default: `{}`)
-- `aliases`: List of additional symlink names for the executable (default: `[]`)
-- `filesToPatch`: List of file paths (glob patterns) relative to package root to patch for self-references (default: `["share/applications/*.desktop"]`)
-  - Example: `["bin/*", "lib/*.sh"]` to replace original package paths with wrapped package paths
-  - Desktop files are patched by default to update Exec= and Icon= paths
-- `wrapper`: Custom wrapper function (optional, overrides default exec wrapper)
-
-The function:
-- Preserves all outputs from the original package (man pages, completions, etc.)
-- Uses `lndir` for symlinking to maintain directory structure
-- Generates a shell wrapper script with proper escaping
-- Handles multi-output derivations correctly
 
 ### wrapModule Function
 
-Creates a reusable wrapper module with:
+Creates a reusable wrapper module.
+
+Imports `wlib.modules.default` then evaluates the module. It then returns `.config` so that `.wrap` is easily accessible!
+
+Use this when you want to quickly create a wrapper but without providing it a `pkgs` yet.
+
+```nix
+wrapModule = (wlib.evalModule wlib.modules.default).config.apply;
+```
+
+### wrapProgram Function
+
+Imports `wlib.modules.default` then evaluates the module. It then returns the wrapped package.
+
+Use this when you want to quickly create a wrapped package directly. Requires a `pkgs` to be set.
+
+```nix
+wrapModule = (wlib.evalModule wlib.modules.default).config.wrap;
+```
+
+### evalModule Function
+
 - Type-safe configuration options via the module system
 - `options`: Exposed options for documentation generation
 - `apply`: Function to instantiate the wrapper with settings, returning a config object
@@ -145,21 +135,67 @@ Creates a reusable wrapper module with:
 Built-in options (always available):
 - `pkgs`: nixpkgs instance (required)
 - `package`: Base package to wrap
-- `extraPackages`: Additional runtime dependencies
+- `aliases`: List of additional symlink names for the executable (default: `[]`)
+- `extraPackages`: Additional runtime dependencies to add to PATH
 - `flags`: Command-line flags (attribute set)
+  - Value `{}`: Flag without argument (e.g., `--verbose`)
+  - Value `"string"`: Flag with argument (e.g., `--output "file.txt"`)
+  - Value `false` or `null`: Flag omitted
 - `flagSeparator`: Separator between flag name and value (default: `" "`)
 - `args`: Command-line arguments list (auto-generated from `flags` if not provided)
 - `env`: Environment variables
 - `passthru`: Additional passthru attributes
-- `filesToPatch`: List of file paths (glob patterns) to patch for self-references (default: `["share/applications/*.desktop"]`)
-- `filesToExclude`: List of file paths (glob patterns) to exclude from the wrapped package (default: `[]`)
 - `wrapper`: The resulting wrapped package (read-only, auto-generated from other options)
-- `apply`: Function to extend the configuration with additional modules (read-only)
+- `apply`: Function to extend the config with additional modules (read-only)
+- `wrapperFunction`: wrapper function to be used to make the wrapper.
+  - type: `{ config, wlib, ... /* other args from callPackage */ }` -> which returns a package
+  - Returned package MUST contain `$out/bin/${binName}` as the executable to be wrapped.
+
+The `wrapModule` function:
+- Preserves all outputs from the original package (man pages, completions, etc.)
+- Uses `lndir` for symlinking to maintain directory structure
+- Generates a shell wrapper script with proper escaping
+- Handles multi-output derivations correctly
 
 Custom types:
 - `wlib.types.file`: File type with `content` and `path` options
   - `content`: File contents as string
   - `path`: Derived path using `pkgs.writeText`
+
+### mkWrapperFlagType and mkWrapperFlag
+
+These functions define typed module options representing wrapper flags.
+
+`mkWrapperFlagType n` creates a Nix type that validates flags expecting `n` arguments per instance.
+
+`mkWrapperFlag n` builds a matching option definition with reasonable defaults (`false` for 0-arity, empty list otherwise).
+
+They help ensure that wrapper argument modules are statically type-checked and compatible with `argOpts2list`.
+
+They are used when defining the module used for options by the `makeWrapper` and `makeBinaryWrapper` `wrapperFunction` implementations
+
+### argOpts2list
+
+Converts a flat attribute set of wrapper argument options into a sequential list of command-line arguments.
+
+Accepts a structure like `{ "--flag" = true; "--set" = [ [ "VAR" "VALUE" ] ]; }` and produces a linearized list suitable for `makeWrapper`.
+
+Supports boolean flags (included or omitted), single-argument flags (lists of strings), and multi-argument flags (lists of fixed-length lists).
+
+This is used by the `makeWrapper` and `makeBinaryWrapper` `wrapperFunction` implementations to gather wrapper arguments
+
+### generateArgsFromFlags
+
+Generates a list of arguments from a flags attribute set and a configurable flag separator.
+Each key is treated as a flag name, and values determine how the flag appears:
+
+* `true` → flag alone
+* `false` or `null` → omitted
+* list → repeated flags
+* string → flag with value
+  The separator determines spacing (`"--flag value"`) or joining (`"--flag=value"`).
+
+It is the function that maps the `config.opts` module option to something that would work in the `config.args` option.
 
 ### Module System Integration
 
@@ -204,7 +240,7 @@ The `apply` function re-evaluates the module with both the original settings and
 Wraps mpv with configuration file support and script management:
 
 ```nix
-(wrappers.wrapperModules.mpv.apply {
+wrappers.wrapperModules.mpv.wrap {
   pkgs = pkgs;
   scripts = [ pkgs.mpvScripts.mpris pkgs.mpvScripts.thumbnail ];
   "mpv.conf".content = ''
@@ -215,10 +251,10 @@ Wraps mpv with configuration file support and script management:
     RIGHT seek 5
     LEFT seek -5
   '';
-  extraFlags = {
+  flags = {
     "--save-position-on-quit" = {};
   };
-}).wrapper
+}
 ```
 
 ### notmuch Module
@@ -226,7 +262,7 @@ Wraps mpv with configuration file support and script management:
 Wraps notmuch with INI-based configuration:
 
 ```nix
-(wrappers.wrapperModules.notmuch.apply {
+wrappers.wrapperModules.notmuch.wrap {
   pkgs = pkgs;
   config = {
     database = {
@@ -238,7 +274,7 @@ Wraps notmuch with INI-based configuration:
       primary_email = "john@example.com";
     };
   };
-}).wrapper
+}
 ```
 
 ## alternatives
