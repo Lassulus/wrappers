@@ -58,7 +58,8 @@ let
 
       # This will return a derivation that wraps the hello package with the --greeting flag set to "hi".
   */
-  wrapModule =
+  wrapModule = moduleInterface: (evalModule moduleInterface).config;
+  evalModule =
     moduleInterface:
     let
       wrapperLib = {
@@ -296,7 +297,7 @@ let
         };
       evaled = eval { };
     in
-    evaled.config;
+    evaled;
 
   /**
     Create a wrapped application that preserves all original outputs (man pages, completions, etc.)
@@ -591,5 +592,5 @@ let
     wrappedPackage;
 in
 {
-  inherit wrapModule wrapPackage;
+  inherit evalModule wrapModule wrapPackage;
 }
