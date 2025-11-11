@@ -59,6 +59,39 @@ let
       # This will return a derivation that wraps the hello package with the --greeting flag set to "hi".
   */
 
+  /**
+    Escape a shell argument while preserving environment variable expansion.
+    This escapes backslashes and double quotes to prevent injection, then
+    wraps the result in double quotes.
+    Unlike lib.escapeShellArg which uses single quotes, this allows
+    environment variable expansion (e.g., $HOME, ${VAR}).
+
+    # Example
+
+    ```nix
+    escapeShellArgWithEnv "$HOME/config.txt"
+    => "\"$HOME/config.txt\""
+
+    escapeShellArgWithEnv "/path/with\"quote"
+    => "\"/path/with\\\"quote\""
+
+    escapeShellArgWithEnv "/path/with\\backslash"
+    => "\"/path/with\\\\backslash\""
+    ```
+  */
+  escapeShellArgWithEnv =
+    arg:
+    let
+      argStr = toString arg;
+      # Escape backslashes first, then double quotes
+      escaped = lib.replaceStrings [ ''\'' ''"'' ] [ ''\\'' ''\"'' ] argStr;
+    in
+    ''"${escaped}"'';
+
+  /**
+    A collection of types for wrapper modules.
+    For now this only contains a file type.
+  */
   types = {
     # pkgs -> module { content, path }
     file =
