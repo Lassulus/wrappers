@@ -423,6 +423,8 @@ let
 
     - `pkgs`: The nixpkgs pkgs instance to use
     - `package`: The package to wrap
+    - `exePath`: Path to the executable to wrap (optional, defaults to lib.getExe package)
+    - `binName`: Name for the wrapped binary (optional, defaults to baseNameOf exePath)
     - `runtimeInputs`: List of packages to add to PATH (optional)
     - `env`: Attribute set of environment variables to export (optional)
     - `flags`: Attribute set of command-line flags to add (optional)
@@ -457,8 +459,21 @@ let
       '';
     }
 
+    # With custom executable path and binary name:
+    wrapPackage {
+      pkgs = pkgs;
+      package = pkgs.coreutils;
+      exePath = "${pkgs.coreutils}/bin/ls";
+      binName = "my-ls";
+      flags = {
+        "--color" = "auto";
+      };
+    }
+
     # Or with custom wrapper:
-    wrapPackage pkgs.someProgram {
+    wrapPackage {
+      pkgs = pkgs;
+      package = pkgs.someProgram;
       wrapper = { exePath, flagsString, envString, preHook, ... }: ''
         ${envString}
         ${preHook}
@@ -472,6 +487,8 @@ let
     {
       pkgs,
       package,
+      exePath ? lib.getExe package,
+      binName ? baseNameOf exePath,
       runtimeInputs ? [ ],
       env ? { },
       flags ? { },
@@ -501,10 +518,6 @@ let
       ),
     }@funcArgs:
     let
-      # Extract binary name from the exe path
-      exePath = lib.getExe package;
-      binName = baseNameOf exePath;
-
       # Generate environment variable exports
       envString =
         if env == { } then

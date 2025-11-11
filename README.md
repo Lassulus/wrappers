@@ -127,6 +127,8 @@ wlib.wrapModule ({ config, wlib, ... }: {
 Arguments:
 - `pkgs`: nixpkgs instance
 - `package`: Base package to wrap
+- `exePath`: Path to the executable to wrap (default: `lib.getExe package`)
+- `binName`: Name for the wrapped binary (default: `baseNameOf exePath`)
 - `runtimeInputs`: List of packages added to PATH (default: `[]`)
 - `env`: Attribute set of environment variables (default: `{}`)
 - `flags`: Attribute set of command-line flags (default: `{}`)
@@ -143,6 +145,7 @@ Arguments:
 - `filesToPatch`: List of file paths (glob patterns) relative to package root to patch for self-references (default: `["share/applications/*.desktop"]`)
   - Example: `["bin/*", "lib/*.sh"]` to replace original package paths with wrapped package paths
   - Desktop files are patched by default to update Exec= and Icon= paths
+- `filesToExclude`: List of file paths (glob patterns) to exclude from the wrapped package (default: `[]`)
 - `wrapper`: Custom wrapper function (optional, overrides default exec wrapper)
 
 The function:
