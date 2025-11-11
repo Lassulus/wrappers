@@ -58,39 +58,38 @@ let
 
       # This will return a derivation that wraps the hello package with the --greeting flag set to "hi".
   */
+
+  types = {
+    # pkgs -> module { content, path }
+    file =
+      # we need to pass pkgs here, because writeText is in pkgs
+      pkgs:
+      lib.types.submodule (
+        { name, config, ... }:
+        {
+          options = {
+            content = lib.mkOption {
+              type = lib.types.lines;
+              description = ''
+                content of file
+              '';
+            };
+            path = lib.mkOption {
+              type = lib.types.path;
+              description = ''
+                the path to the file
+              '';
+              default = pkgs.writeText name config.content;
+              defaultText = "pkgs.writeText name <content>";
+            };
+          };
+        }
+      );
+  };
+
   wrapModule =
     moduleInterface:
     let
-      wrapperLib = {
-        types = {
-          inherit file;
-        };
-      };
-      # pkgs -> module { content, path }
-      file =
-        # we need to pass pkgs here, because writeText is in pkgs
-        pkgs:
-        lib.types.submodule (
-          { name, config, ... }:
-          {
-            options = {
-              content = lib.mkOption {
-                type = lib.types.lines;
-                description = ''
-                  content of file
-                '';
-              };
-              path = lib.mkOption {
-                type = lib.types.path;
-                description = ''
-                  the path to the file
-                '';
-                default = pkgs.writeText name config.content;
-                defaultText = "pkgs.writeText name <content>";
-              };
-            };
-          }
-        );
       staticModules = [
         (
           { config, ... }:
@@ -589,7 +588,8 @@ let
       );
     in
     wrappedPackage;
+  wrapperLib = {
+    inherit types wrapModule wrapPackage;
+  };
 in
-{
-  inherit wrapModule wrapPackage;
-}
+wrapperLib
