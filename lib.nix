@@ -59,8 +59,121 @@ let
       # This will return a derivation that wraps the hello package with the --greeting flag set to "hi".
   */
 
+  /**
+    Escape a shell argument while preserving environment variable expansion.
+    This escapes backslashes and double quotes to prevent injection, then
+    wraps the result in double quotes.
+    Unlike lib.escapeShellArg which uses single quotes, this allows
+    environment variable expansion (e.g., $HOME, ${VAR}).
+
+    # Example
+
+    ```nix
+    escapeShellArgWithEnv "$HOME/config.txt"
+    => "\"$HOME/config.txt\""
+
+    escapeShellArgWithEnv "/path/with\"quote"
+    => "\"/path/with\\\"quote\""
+
+    escapeShellArgWithEnv "/path/with\\backslash"
+    => "\"/path/with\\\\backslash\""
+    ```
+  */
+  escapeShellArgWithEnv =
+    arg:
+    let
+      argStr = toString arg;
+      # Escape backslashes first, then double quotes
+      escaped = lib.replaceStrings [ ''\'' ''"'' ] [ ''\\'' ''\"'' ] argStr;
+    in
+    ''"${escaped}"'';
+
+  /**
+    A collection of types for wrapper modules.
+    For now this only contains a file type.
+  */
   types = {
-    # pkgs -> module { content, path }
+    /**
+      A type for configuration files in wrapper modules.
+
+      This type creates a submodule with two options:
+      - `content`: The text content of the file (type: lines)
+      - `path`: The path to the file in the Nix store (type: path, auto-generated)
+
+      # Arguments
+
+      - `pkgs`: The nixpkgs instance to use for writeText
+
+      # Usage
+
+      This type is particularly useful for wrapper modules that need to manage
+      configuration files. The `content` option accepts the file contents as a string,
+      and the `path` option is automatically derived using `pkgs.writeText` with the
+      attribute name and content.
+
+      # Example
+
+      ```nix
+      wlib.wrapModule ({ config, wlib, ... }: {
+        options = {
+          "app.conf" = lib.mkOption {
+            type = wlib.types.file config.pkgs;
+            default.content = "";
+            description = "Configuration file for the application";
+          };
+        };
+
+        config.flags = {
+          "--config" = config."app.conf".path;
+        };
+      })
+      ```
+
+      In the above example:
+      - The option name "app.conf" becomes the filename in the store
+      - Users can set content via `"app.conf".content = "setting=value";`
+      - The generated file path is available via `"app.conf".path`
+      - The path can be passed to the wrapped program via flags or environment variables
+
+      # Advanced Usage
+
+      You can override the `path` option if you need to use a different file source.
+      When you override `path`, the `content` option is ignored.
+
+      ```nix
+      {
+        # Default behavior: content written to store
+        "app.conf".content = "foo=bar";
+
+        # Custom store path (e.g., a derivation output or local file):
+        # "app.conf".path = ./my-config.conf;
+        # or
+        # "app.conf".path = pkgs.writeText "custom-name" "custom content";
+
+        # Path outside the Nix store (requires quoting as string):
+        # Note: This creates an impure path reference
+        # "app.conf".path = "/home/user/.config/app.conf";
+
+        # Using an environment variable for the path:
+        # Useful for user-specific or runtime-determined paths
+        # "app.conf".path = "$HOME/.config/app.conf";
+        # or
+        # "app.conf".path = "\${XDG_CONFIG_HOME:-$HOME/.config}/app.conf";
+      }
+      ```
+
+      When using paths outside the Nix store or environment variables:
+      - The path must be a string (quoted), not a Nix path literal
+      - The path will be passed as-is to the wrapped program
+      - Environment variables in the path string will be expanded by the shell at runtime
+      - Be aware that this creates impure behavior (path may not exist at build time)
+
+      # Type Signature
+
+      ```
+      file: pkgs -> submodule { content: lines, path: path | str }
+      ```
+    */
     file =
       # we need to pass pkgs here, because writeText is in pkgs
       pkgs:
@@ -71,13 +184,19 @@ let
             content = lib.mkOption {
               type = lib.types.lines;
               description = ''
-                content of file
+                Content of the file. This can be a multi-line string that will be
+                written to the Nix store and made available via the path option.
               '';
             };
             path = lib.mkOption {
-              type = lib.types.path;
+              type = lib.types.either lib.types.path lib.types.str;
               description = ''
-                the path to the file
+                The path to the file. By default, this is automatically
+                generated using pkgs.writeText with the attribute name and content.
+                You can override this to provide:
+                - A custom Nix path (e.g., ./config.txt or pkgs.writeText "name" "content")
+                - An absolute path string outside the store (e.g., "/etc/config.txt")
+                - A path with environment variables (e.g., "$HOME/.config/app.conf")
               '';
               default = pkgs.writeText name config.content;
               defaultText = "pkgs.writeText name <content>";
@@ -401,7 +520,7 @@ let
         if args == [ ] then
           ""
         else
-          " \\\n  " + lib.concatStringsSep " \\\n  " (map lib.escapeShellArg args);
+          " \\\n  " + lib.concatStringsSep " \\\n  " (map wrapperLib.escapeShellArgWithEnv args);
 
       finalWrapper = wrapper {
         inherit
@@ -589,7 +708,12 @@ let
     in
     wrappedPackage;
   wrapperLib = {
-    inherit types wrapModule wrapPackage;
+    inherit
+      types
+      wrapModule
+      wrapPackage
+      escapeShellArgWithEnv
+      ;
   };
 in
 wrapperLib

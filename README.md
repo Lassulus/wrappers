@@ -74,6 +74,23 @@ wrappers.lib.wrapPackage {
 }
 ```
 
+#### Wrapping a specific executable from a package
+
+You can also wrap a specific executable from a package with a custom name:
+
+```nix
+wrappers.lib.wrapPackage {
+  inherit pkgs;
+  package = pkgs.coreutils;
+  exePath = "${pkgs.coreutils}/bin/ls";
+  binName = "my-ls";
+  flags = {
+    "--color" = "auto";
+    "-l" = {};
+  };
+}
+```
+
 ### Creating Custom Wrapper Modules
 
 ```nix
