@@ -7,7 +7,7 @@
       forAllSystems = f: nixpkgs.lib.genAttrs nixpkgs.lib.platforms.all (system: f system);
     in
     {
-      lib = import ./lib.nix { lib = nixpkgs.lib; };
+      lib = import ./lib { lib = nixpkgs.lib; };
       wrapperModules = import ./modules.nix {
         lib = nixpkgs.lib;
         wlib = self.lib;

@@ -3,7 +3,7 @@
 }:
 let
   lib = pkgs.lib;
-  wlib = import ./lib.nix { inherit lib; };
+  wlib = import ./lib { inherit lib; };
 in
 {
   lib = wlib;
