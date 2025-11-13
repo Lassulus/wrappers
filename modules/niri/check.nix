@@ -14,5 +14,6 @@ let
 in
 pkgs.runCommand "niri-test" { } ''
   "${niriWrapped}/bin/niri" --version | grep -q "${niriWrapped.version}"
+  "${niriWrapped}/bin/niri" validate
   touch $out
 ''
