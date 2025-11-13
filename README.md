@@ -139,6 +139,7 @@ Arguments:
 - `args`: List of command-line arguments like argv in execve (default: auto-generated from `flags`)
   - Example: `[ "--silent" "--connect-timeout" "30" ]`
   - If provided, overrides automatic generation from `flags`
+- `escapeArgs`: Whether to excape the final shell arguments, e.g. put quotes around them
 - `preHook`: Shell script executed before the command (default: `""`)
 - `passthru`: Additional attributes for the derivation's passthru (default: `{}`)
 - `aliases`: List of additional symlink names for the executable (default: `[]`)

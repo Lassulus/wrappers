@@ -419,6 +419,8 @@ let
       flagSeparator ? " ",
       # " " for "--flag value" or "=" for "--flag=value"
       args ? generateArgsFromFlags flags flagSeparator,
+      # Whether to escape the final shell arguments, e.g. put quotes around them
+      escapeArgs ? true,
       preHook ? "",
       passthru ? { },
       aliases ? [ ],
@@ -460,7 +462,10 @@ let
         if args == [ ] then
           ""
         else
-          " \\\n  " + lib.concatStringsSep " \\\n  " (map wrapperLib.escapeShellArgWithEnv args);
+          let
+            escapeFn = if escapeArgs then wrapperLib.escapeShellArgWithEnv else x: x;
+          in
+          " \\\n  " + lib.concatStringsSep " \\\n  " (map escapeFn args);
 
       finalWrapper = wrapper {
         inherit
