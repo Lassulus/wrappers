@@ -206,69 +206,80 @@ let
       );
   };
 
+  _evalModules =
+    {
+      modules,
+      class ? "wrapper",
+      specialArgs ? {
+        wlib = wrapperLib;
+      },
+    }:
+    lib.evalModules {
+      inherit modules class specialArgs;
+    };
+
   modules = lib.genAttrs [ "package" "wrapper" "meta" ] (name: import ./modules/${name}.nix);
 
   wrapModule =
-    moduleInterface:
+    wrapperModule:
     let
-      staticModules = [
-        (
-          { config, ... }:
-          {
-            options = {
-              _moduleSettings = lib.mkOption {
-                type = lib.types.raw;
-                internal = true;
-                description = ''
-                  Internal option storing the settings module passed to apply.
-                  Used by apply to re-evaluate with additional modules.
-                '';
+      eval = _evalModules {
+        modules = [
+          (
+            { config, ... }:
+            {
+              options = {
+                _moduleSettings = lib.mkOption {
+                  type = lib.types.raw;
+                  internal = true;
+                  default = { };
+                  description = ''
+                    Internal option storing the settings module passed to apply.
+                    Used by apply to re-evaluate with additional modules.
+                  '';
+                };
+                extend = lib.mkOption {
+                  type = lib.types.functionTo lib.types.raw;
+                  description = ''
+                    Function to extend the current configuration with additional settings.
+                    Re-evaluates the configuration with the original modules plus the new settings.
+                  '';
+                  default =
+                    module:
+                    eval.extendModules {
+                      modules = [
+                        config._moduleSettings
+                        module
+                        {
+                          _moduleSettings = lib.mkForce {
+                            imports = [
+                              config._moduleSettings
+                              module
+                            ];
+                          };
+                        }
+                      ];
+                    };
+                };
+                apply = lib.mkOption {
+                  type = lib.types.functionTo lib.types.raw;
+                  readOnly = true;
+                  description = ''
+                    Function to extend the current configuration with additional modules.
+                    Re-evaluates the configuration with the original settings plus the new module.
+                  '';
+                  default = module: (config.extend module).config;
+                };
               };
-              apply = lib.mkOption {
-                type = lib.types.functionTo lib.types.raw;
-                readOnly = true;
-                description = ''
-                  Function to extend the current configuration with additional modules.
-                  Re-evaluates the configuration with the original settings plus the new module.
-                '';
-                default =
-                  module:
-                  (evaled.extendModules {
-                    modules = [
-                      config._moduleSettings
-                      module
-                      {
-                        _moduleSettings = lib.mkForce {
-                          imports = [
-                            config._moduleSettings
-                            module
-                          ];
-                        };
-                      }
-                    ];
-                  }).config;
-              };
-            };
-          }
-        )
-      ];
-      eval =
-        settings:
-        lib.evalModules {
-          modules = staticModules ++ [
-            modules.wrapper
-            modules.meta
-            moduleInterface
-            settings
-            { _moduleSettings = settings; }
-          ];
-          specialArgs = {
-            wlib = wrapperLib;
-          };
-        };
-      evaled = eval { };
+            }
+          )
+          modules.wrapper
+          modules.meta
+          wrapperModule
+        ];
+      };
     in
-    evaled.config;
+    eval.config;
 
   /**
     Create a wrapped application that preserves all original outputs (man pages, completions, etc.)
