@@ -206,6 +206,8 @@ let
       );
   };
 
+  modules = lib.genAttrs [ "package" "wrapper" "meta" ] (name: import ./modules/${name}.nix);
+
   wrapModule =
     moduleInterface:
     let
@@ -214,114 +216,6 @@ let
           { config, ... }:
           {
             options = {
-              pkgs = lib.mkOption {
-                description = ''
-                  The nixpkgs pkgs instance to use.
-                  We want to have this, so wrapper modules can be system agnostic.
-                '';
-              };
-              package = lib.mkOption {
-                type = lib.types.package;
-                description = ''
-                  The base package to wrap.
-                  This means we inherit all other files from this package
-                  (like man page, /share, ...)
-                '';
-              };
-              extraPackages = lib.mkOption {
-                type = lib.types.listOf lib.types.package;
-                default = [ ];
-                description = ''
-                  Additional packages to add to the wrapper's runtime dependencies.
-                  This is useful if the wrapped program needs additional libraries or tools to function correctly.
-                  These packages will be added to the wrapper's runtime dependencies, ensuring they are available when the wrapped program is executed.
-                '';
-              };
-              flags = lib.mkOption {
-                type = lib.types.attrsOf lib.types.unspecified; # TODO add list handling
-                default = { };
-                description = ''
-                  Flags to pass to the wrapper.
-                  The key is the flag name, the value is the flag value.
-                  If the value is true, the flag will be passed without a value.
-                  If the value is false or null, the flag will not be passed.
-                  If the value is a list, the flag will be passed multiple times with each value.
-                '';
-              };
-              flagSeparator = lib.mkOption {
-                type = lib.types.str;
-                default = " ";
-                description = ''
-                  Separator between flag names and values when generating args from flags.
-                  " " for "--flag value" or "=" for "--flag=value"
-                '';
-              };
-              args = lib.mkOption {
-                type = lib.types.listOf lib.types.str;
-                default = generateArgsFromFlags config.flags config.flagSeparator;
-                description = ''
-                  Command-line arguments to pass to the wrapper (like argv in execve).
-                  This is a list of strings representing individual arguments.
-                  If not specified, will be automatically generated from flags.
-                '';
-              };
-              env = lib.mkOption {
-                type = lib.types.attrsOf lib.types.str;
-                default = { };
-                description = ''
-                  Environment variables to set in the wrapper.
-                '';
-              };
-              passthru = lib.mkOption {
-                type = lib.types.attrs;
-                default = { };
-                description = ''
-                  Additional attributes to add to the resulting derivation's passthru.
-                  This can be used to add additional metadata or functionality to the wrapped package.
-                  This will always contain options, config and settings, so these are reserved names and cannot be used here.
-                '';
-              };
-              filesToPatch = lib.mkOption {
-                type = lib.types.listOf lib.types.str;
-                default = [ "share/applications/*.desktop" ];
-                description = ''
-                  List of file paths (glob patterns) relative to package root to patch for self-references.
-                  Desktop files are patched by default to update Exec= and Icon= paths.
-                '';
-              };
-              filesToExclude = lib.mkOption {
-                type = lib.types.listOf lib.types.str;
-                default = [ ];
-                description = ''
-                  List of file paths (glob patterns) relative to package root to exclude from the wrapped package.
-                  This allows filtering out unwanted binaries or files.
-                  Example: [ "bin/unwanted-tool" "share/applications/*.desktop" ]
-                '';
-              };
-              wrapper = lib.mkOption {
-                type = lib.types.package;
-                readOnly = true;
-                description = ''
-                  The wrapped package created by wrapPackage. This wraps the configured package
-                  with the specified flags, environment variables, runtime dependencies, and other
-                  options in a portable way.
-                '';
-                default = wrapPackage {
-                  pkgs = config.pkgs;
-                  package = config.package;
-                  runtimeInputs = config.extraPackages;
-                  flags = config.flags;
-                  flagSeparator = config.flagSeparator;
-                  args = config.args;
-                  env = config.env;
-                  filesToPatch = config.filesToPatch;
-                  filesToExclude = config.filesToExclude;
-                  passthru = {
-                    configuration = config;
-                  }
-                  // config.passthru;
-                };
-              };
               _moduleSettings = lib.mkOption {
                 type = lib.types.raw;
                 internal = true;
@@ -354,48 +248,6 @@ let
                     ];
                   }).config;
               };
-              meta = {
-                maintainers = lib.mkOption {
-                  type = lib.types.listOf (
-                    lib.types.submodule (
-                      { name, ... }:
-                      {
-                        options = {
-                          name = lib.mkOption {
-                            type = lib.types.str;
-                            default = name;
-                            description = "name";
-                          };
-                          github = lib.mkOption {
-                            type = lib.types.str;
-                            description = "GitHub username";
-                          };
-                          githubId = lib.mkOption {
-                            type = lib.types.int;
-                            description = "GitHub id";
-                          };
-                          email = lib.mkOption {
-                            type = lib.types.nullOr lib.types.str;
-                            default = null;
-                            description = "email";
-                          };
-                          matrix = lib.mkOption {
-                            type = lib.types.nullOr lib.types.str;
-                            default = null;
-                            description = "Matrix ID";
-                          };
-                        };
-                      }
-                    )
-                  );
-                  default = [ ];
-                };
-                platforms = lib.mkOption {
-                  type = lib.types.listOf (lib.types.enum lib.platforms.all);
-                  default = lib.platforms.all;
-                  description = "Supported platforms";
-                };
-              };
             };
           }
         )
@@ -404,6 +256,8 @@ let
         settings:
         lib.evalModules {
           modules = staticModules ++ [
+            modules.wrapper
+            modules.meta
             moduleInterface
             settings
             { _moduleSettings = settings; }
@@ -723,9 +577,11 @@ let
   wrapperLib = {
     inherit
       types
+      modules
       wrapModule
       wrapPackage
       escapeShellArgWithEnv
+      generateArgsFromFlags
       ;
   };
 in
