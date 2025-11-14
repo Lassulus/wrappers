@@ -220,6 +220,65 @@ let
 
   modules = lib.genAttrs [ "package" "wrapper" "meta" ] (name: import ./modules/${name}.nix);
 
+  /**
+    Create a wrapper configuration using the NixOS module system.
+
+    This function provides a type-safe way to configure wrappers using the same
+    module system as NixOS. It evaluates the provided module and returns a
+    configuration object that can be incrementally extended.
+
+    # Type
+    ```
+    wrapModule :: Module -> Config
+    ```
+
+    # Arguments
+    - `wrapperModule`: A NixOS-style module defining the wrapper configuration.
+      Can use options like `package`, `flags`, `env`, etc. from the wrapper module.
+
+    # Returns
+    A configuration object containing:
+    - All wrapper option values (package, flags, env, etc.)
+    - `extend :: Module -> Evaluation` - Returns full module evaluation (has .config, .extendModules, .options)
+    - `apply :: Module -> Config` - Returns extended .config (has option values and extend/apply functions)
+
+    # Examples
+
+    Basic usage:
+    ```nix
+    wrapper = wrapModule {
+      package = pkgs.hello;
+      flags."--greeting" = "Hello";
+    };
+    ```
+
+    Using `apply` for incremental configuration:
+    ```nix
+    wrapper = wrapModule {
+      package = pkgs.hello;
+    };
+
+    wrapper' = wrapper.apply {
+      flags."--greeting" = "Hi";
+    };
+    # wrapper'.package is pkgs.hello
+    # wrapper'.flags."--greeting" is "Hi"
+    ```
+
+    Using `extend` to access module system functions:
+    ```nix
+    wrapper = wrapModule {
+      package = pkgs.hello;
+    };
+
+    extended = wrapper.extend {
+      flags."--greeting" = "Hi";
+    };
+    # extended.config.package is pkgs.hello
+    # extended.options - available for inspection
+    # extended.extendModules - available for further extension
+    ```
+  */
   wrapModule =
     wrapperModule:
     let
