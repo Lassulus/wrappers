@@ -1,57 +1,56 @@
 {
-  wlib,
+  config,
   lib,
+  wlib,
   ...
 }:
-wlib.wrapModule (
-  { config, wlib, ... }:
-  let
-    iniFormat = config.pkgs.formats.iniWithGlobalSection { };
-    iniAtomType = iniFormat.lib.types.atom;
-  in
-  {
-    options = {
-      "config" = lib.mkOption {
-        type = wlib.types.file config.pkgs;
-        default.path = iniFormat.generate "mako-settings" { globalSection = config.settings; };
-      };
-
-      settings = lib.mkOption {
-        type = lib.types.attrsOf (
-          lib.types.oneOf [
-            iniAtomType
-            (lib.types.attrsOf iniAtomType)
-          ]
-        );
-        default = { };
-        description = ''
-          Configuration settings for mako. Can include both global settings and sections.
-          All available options can be found here:
-          <https://github.com/emersion/mako/blob/master/doc/mako.5.scd>.
-        '';
-      };
-      extraFlags = lib.mkOption {
-        type = lib.types.attrsOf lib.types.unspecified; # TODO add list handling
-        default = { };
-        description = "Extra flags to pass to mako.";
-      };
+let
+  iniFormat = config.pkgs.formats.iniWithGlobalSection { };
+  iniAtomType = iniFormat.lib.types.atom;
+in
+{
+  _class = "wrapper";
+  options = {
+    "config" = lib.mkOption {
+      type = wlib.types.file config.pkgs;
+      default.path = iniFormat.generate "mako-settings" { globalSection = config.settings; };
     };
 
-    config.flagSeparator = "=";
-    config.flags = {
-      "--config" = config."config".path;
-    }
-    // config.extraFlags;
+    settings = lib.mkOption {
+      type = lib.types.attrsOf (
+        lib.types.oneOf [
+          iniAtomType
+          (lib.types.attrsOf iniAtomType)
+        ]
+      );
+      default = { };
+      description = ''
+        Configuration settings for mako. Can include both global settings and sections.
+        All available options can be found here:
+        <https://github.com/emersion/mako/blob/master/doc/mako.5.scd>.
+      '';
+    };
+    extraFlags = lib.mkOption {
+      type = lib.types.attrsOf lib.types.unspecified; # TODO add list handling
+      default = { };
+      description = "Extra flags to pass to mako.";
+    };
+  };
 
-    config.package = lib.mkDefault config.pkgs.mako;
-
-    config.meta.maintainers = [
-      {
-        name = "altacountbabi";
-        github = "altacountbabi";
-        githubId = 82091823;
-      }
-    ];
-    config.meta.platforms = lib.platforms.linux;
+  config.flagSeparator = "=";
+  config.flags = {
+    "--config" = config."config".path;
   }
-)
+  // config.extraFlags;
+
+  config.package = lib.mkDefault config.pkgs.mako;
+
+  config.meta.maintainers = [
+    {
+      name = "altacountbabi";
+      github = "altacountbabi";
+      githubId = 82091823;
+    }
+  ];
+  config.meta.platforms = lib.platforms.linux;
+}
