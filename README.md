@@ -150,7 +150,7 @@ Arguments:
 
 The function:
 - Preserves all outputs from the original package (man pages, completions, etc.)
-- Uses `lndir` for symlinking to maintain directory structure
+- Uses `cp -rs` for recursive symlinking to maintain directory structure
 - Generates a shell wrapper script with proper escaping
 - Handles multi-output derivations correctly
 

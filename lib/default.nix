@@ -434,10 +434,15 @@ let
             nativeBuildInputs = lib.optionals (filesToPatch != [ ]) [ pkgs.replace ];
 
             buildCommand = ''
-              # Symlink all paths to the main output
+              # Symlink all paths to the main output using cp -rs (recursive symlink)
               mkdir -p $out
               for path in ${lib.concatStringsSep " " (map toString paths)}; do
-                ${pkgs.lndir}/bin/lndir -silent "$path" $out
+                # Use cp -rsn to recursively create symlinks
+                # -r: recursive, -s: symbolic links, -n: no-clobber (don't overwrite)
+                if [ -d "$path" ]; then
+                  # Copy all files, -n means don't overwrite existing files
+                  cp -rsn "$path"/* $out/ 2>/dev/null || true
+                fi
               done
 
               # Exclude specified files
@@ -496,8 +501,10 @@ let
                   ''
                     if [[ -n "''${${output}:-}" ]]; then
                       mkdir -p ${"$" + output}
-                      # Only symlink from the original package's corresponding output
-                      ${pkgs.lndir}/bin/lndir -silent "${originalOutputs.${output}}" ${"$" + output}
+                      # Recursively symlink the output
+                      if [ -d "${originalOutputs.${output}}" ]; then
+                        cp -rs "${originalOutputs.${output}}"/* ${"$" + output}/ 2>/dev/null || true
+                      fi
                     fi
                   ''
                 else
