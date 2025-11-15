@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  wlib,
+  ...
+}:
 let
   iniFmt = config.pkgs.formats.ini { };
 in
@@ -14,13 +19,18 @@ in
       '';
     };
     extraFlags = lib.mkOption {
-      type = lib.types.attrsOf lib.types.unspecified; # TODO add list handling
+      type = lib.types.attrsOf lib.types.unspecified;
       default = { };
       description = "Extra flags to pass to foot.";
     };
+    "foot.ini" = lib.mkOption {
+      type = wlib.types.file config.pkgs;
+      description = "foot.init configuration file.";
+      default.path = iniFmt.generate "foot.ini" config.settings;
+    };
   };
   config.flags = {
-    "--config" = iniFmt.generate "foot.ini" config.settings;
+    "--config" = config."foot.ini".path;
   }
   // config.extraFlags;
   config.package = lib.mkDefault config.pkgs.foot;

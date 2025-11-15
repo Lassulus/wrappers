@@ -1,19 +1,11 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  wlib,
+  ...
+}:
 let
   tomlFmt = config.pkgs.formats.toml { };
-  conf =
-    let
-      base = tomlFmt.generate "helix-config" config.settings;
-    in
-    if config.extraSettings != "" then
-      config.pkgs.concatText "helix-config" [
-        base
-        (config.pkgs.writeText "extraSettings" config.extraSettings)
-      ]
-    else
-      base;
-  langs = tomlFmt.generate "helix-languages-config" config.languages;
-  ignore = config.pkgs.writeText "helix-ignore" (lib.strings.concatLines config.ignores);
   themes = lib.mapAttrsToList (
     name: value:
     let
@@ -74,6 +66,28 @@ in
         The format is the same as in .gitignore.
       '';
     };
+    "config.toml" = lib.mkOption {
+      type = wlib.types.file config.pkgs;
+      default.path =
+        let
+          base = tomlFmt.generate "helix-config" config.settings;
+        in
+        if config.extraSettings != "" then
+          config.pkgs.concatText "helix-config" [
+            base
+            (config.pkgs.writeText "extraSettings" config.extraSettings)
+          ]
+        else
+          base;
+    };
+    "languages.toml" = lib.mkOption {
+      type = wlib.types.file config.pkgs;
+      default.path = tomlFmt.generate "helix-languages.toml" config.languages;
+    };
+    ignoreFile = lib.mkOption {
+      type = wlib.types.file config.pkgs;
+      default.content = lib.strings.concatLines config.ignores;
+    };
   };
   config.package = lib.mkDefault config.pkgs.helix;
   config.env = {
@@ -89,9 +103,9 @@ in
               entry = name: path: { inherit name path; };
             in
             [
-              (entry "config.toml" conf)
-              (entry "languages.toml" langs)
-              (entry "ignore" ignore)
+              (entry "config.toml" config."config.toml".path)
+              (entry "languages.toml" config."languages.toml".path)
+              (entry "ignore" config.ignoreFile.path)
             ]
             ++ themes
           )
