@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  wlib,
+  ...
+}:
 let
   tomlFmt = config.pkgs.formats.toml { };
 in
@@ -14,13 +19,19 @@ in
       '';
     };
     extraFlags = lib.mkOption {
-      type = lib.types.attrsOf lib.types.unspecified; # TODO add list handling
+      type = lib.types.attrsOf lib.types.unspecified;
       default = { };
       description = "Extra flags to pass to alacritty.";
     };
+    "alacritty.toml" = lib.mkOption {
+      type = wlib.types.file config.pkgs;
+      # TODO add a pure toTOML function
+      default.path = tomlFmt.generate "alacritty.toml" config.settings;
+      description = "alacritty.toml configuration file.";
+    };
   };
   config.flags = {
-    "--config-file" = tomlFmt.generate "alacritty.toml" config.settings;
+    "--config-file" = config."alacritty.toml".path;
   }
   // config.extraFlags;
   config.package = lib.mkDefault config.pkgs.alacritty;

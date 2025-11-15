@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  wlib,
+  ...
+}:
 let
   iniFmt = config.pkgs.formats.ini { };
 in
@@ -14,14 +19,18 @@ in
       '';
     };
     extraFlags = lib.mkOption {
-      type = lib.types.attrsOf lib.types.unspecified; # TODO add list handling
+      type = lib.types.attrsOf lib.types.unspecified;
       default = { };
       description = "Extra flags to pass to fuzzel.";
+    };
+    "fuzzel.ini" = lib.mkOption {
+      type = wlib.types.file config.pkgs;
+      default.path = iniFmt.generate "fuzzel.ini" config.settings;
     };
   };
   config.flagSeparator = "=";
   config.flags = {
-    "--config" = iniFmt.generate "fuzzel.ini" config.settings;
+    "--config" = config."fuzzel.ini".path;
   }
   // config.extraFlags;
   config.package = lib.mkDefault config.pkgs.fuzzel;
