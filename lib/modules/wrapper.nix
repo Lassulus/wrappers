@@ -69,6 +69,24 @@
         Example: [ "bin/unwanted-tool" "share/applications/*.desktop" ]
       '';
     };
+    exePath = lib.mkOption {
+      type = lib.types.path;
+      description = ''
+        Path to the executable within the package to be wrapped.
+        If not specified, the main executable of the package will be used.
+      '';
+      default = lib.getExe config.package;
+      defaultText = "lib.getExe config.package";
+    };
+    binName = lib.mkOption {
+      type = lib.types.str;
+      description = ''
+        Name of the binary in the resulting wrapper package.
+        If not specified, the base name of exePath will be used.
+      '';
+      default = builtins.baseNameOf config.exePath;
+      defaultText = "builtins.baseNameOf config.exePath";
+    };
     wrapper = lib.mkOption {
       type = lib.types.package;
       readOnly = true;
@@ -80,6 +98,8 @@
       default = wlib.wrapPackage {
         pkgs = config.pkgs;
         package = config.package;
+        exePath = config.exePath;
+        binName = config.binName;
         runtimeInputs = config.extraPackages;
         flags = config.flags;
         flagSeparator = config.flagSeparator;

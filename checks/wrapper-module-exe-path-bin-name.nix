@@ -6,42 +6,44 @@ let
   lib = pkgs.lib;
 
   # Test 1: Default behavior (exePath from lib.getExe, binName from basename)
-  wrappedDefault = self.lib.wrapPackage {
-    inherit pkgs;
-    package = pkgs.hello;
-  };
+  wrappedDefault =
+    (self.lib.wrapModule {
+      inherit pkgs;
+      package = pkgs.hello;
+    }).wrapper;
 
   # Test 2: Custom exePath with default binName
-  wrappedCustomExe = self.lib.wrapPackage {
-    inherit pkgs;
-    package = pkgs.coreutils;
-    exePath = "${pkgs.coreutils}/bin/ls";
-  };
+  wrappedCustomExe =
+    (self.lib.wrapModule {
+      inherit pkgs;
+      package = pkgs.coreutils;
+      exePath = lib.getExe' pkgs.coreutils "ls";
+    }).wrapper;
 
   # Test 3: Custom exePath and custom binName
-  wrappedCustomBoth = self.lib.wrapPackage {
-    inherit pkgs;
-    package = pkgs.coreutils;
-    exePath = "${pkgs.coreutils}/bin/ls";
-    binName = "my-ls";
-  };
+  wrappedCustomBoth =
+    (self.lib.wrapModule {
+      inherit pkgs;
+      package = pkgs.coreutils;
+      exePath = lib.getExe' pkgs.coreutils "ls";
+      binName = "my-ls";
+    }).wrapper;
 
   # Test 4: Custom binName with flags
-  wrappedWithFlags = self.lib.wrapPackage {
-    inherit pkgs;
-    package = pkgs.coreutils;
-    exePath = "${pkgs.coreutils}/bin/ls";
-    binName = "colorful-ls";
-    flagSeparator = "=";
-    flags = {
-      "--color" = "auto";
-    };
-  };
+  wrappedWithFlags =
+    (self.lib.wrapModule {
+      inherit pkgs;
+      package = pkgs.coreutils;
+      exePath = lib.getExe' pkgs.coreutils "ls";
+      binName = "colorful-ls";
+      flagSeparator = "=";
+      flags."--color" = "auto";
+    }).wrapper;
 
 in
-pkgs.runCommand "exe-path-bin-name-test" { } ''
+pkgs.runCommand "wrapper-module-exe-path-bin-name-test" { } ''
   set -e
-  echo "Testing exePath and binName parameters..."
+  echo "Testing exePath and binName in wrapModule..."
 
   # Test 1: Default behavior
   echo -e "\n=== Test 1: Default behavior ==="
@@ -91,7 +93,7 @@ pkgs.runCommand "exe-path-bin-name-test" { } ''
     exit 1
   fi
 
-  # Note: The original binaries from the package are still present via symlinkJoin
+  # Note: The original binaries from the package are still present via lndir
   # This is expected behavior - we add the custom binary but don't remove originals
   if [ -L "${wrappedCustomBoth}/bin/ls" ]; then
     echo "PASS: Original binaries from base package are preserved"
@@ -124,6 +126,6 @@ pkgs.runCommand "exe-path-bin-name-test" { } ''
     exit 1
   fi
 
-  echo -e "\n=== SUCCESS: All exePath and binName tests passed ==="
+  echo -e "\n=== SUCCESS: All wrapModule exePath and binName tests passed ==="
   touch $out
 ''
