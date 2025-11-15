@@ -218,7 +218,7 @@ let
       inherit modules class specialArgs;
     };
 
-  modules = lib.genAttrs [ "package" "wrapper" "meta" ] (name: import ./modules/${name}.nix);
+  modules = lib.genAttrs [ "doc" "package" "wrapper" "meta" ] (name: import ./modules/${name}.nix);
 
   /**
     Create a wrapper configuration using the NixOS module system.
@@ -332,6 +332,7 @@ let
               };
             }
           )
+          modules.doc
           modules.wrapper
           modules.meta
           wrapperModule
