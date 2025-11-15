@@ -61,115 +61,106 @@ let
     }).wrapper;
 
 in
-pkgs.runCommand "types-file-env-var-test"
-  {
-    buildInputs = [
-      wrappedWithEnvVar
-      wrappedWithEnvVarFallback
-      wrappedWithAbsolutePath
-      wrappedWithStoreContent
-    ];
-  }
-  ''
-    set -e
-    echo "Testing types.file with environment variables and non-store paths..."
+pkgs.runCommand "types-file-env-var-test" { } ''
+  set -e
+  echo "Testing types.file with environment variables and non-store paths..."
 
-    # Test 1: Environment variable path - $HOME
-    echo -e "\n=== Test 1: Environment variable \$HOME ==="
-    (
-      export HOME=$(mktemp -d)
-      echo "test config from HOME" > "$HOME/test-config.txt"
+  # Test 1: Environment variable path - $HOME
+  echo -e "\n=== Test 1: Environment variable \$HOME ==="
+  (
+    export HOME=$(mktemp -d)
+    echo "test config from HOME" > "$HOME/test-config.txt"
 
-      output=$(${wrappedWithEnvVar}/bin/test-app)
-      if echo "$output" | grep -q "Config file found at: $HOME/test-config.txt"; then
-        echo "PASS: \$HOME environment variable expanded correctly"
-      else
-        echo "FAIL: \$HOME not expanded correctly"
-        echo "Output: $output"
-        exit 1
-      fi
-
-      if echo "$output" | grep -q "test config from HOME"; then
-        echo "PASS: Config file contents read correctly"
-      else
-        echo "FAIL: Config file contents not read"
-        echo "Output: $output"
-        exit 1
-      fi
-    )
-
-    # Test 2: Environment variable with fallback - using fallback
-    echo -e "\n=== Test 2: Environment variable with fallback (using fallback) ==="
-    (
-      export HOME=$(mktemp -d)
-      unset TEST_CONFIG_DIR
-      echo "test config from fallback HOME" > "$HOME/test-config.txt"
-
-      output=$(${wrappedWithEnvVarFallback}/bin/test-app)
-      if echo "$output" | grep -q "Config file found at: $HOME/test-config.txt"; then
-        echo "PASS: Fallback to \$HOME works correctly"
-      else
-        echo "FAIL: Fallback did not work"
-        echo "Output: $output"
-        exit 1
-      fi
-    )
-
-    # Test 2b: Environment variable with fallback - using custom dir
-    echo -e "\n=== Test 2b: Environment variable with fallback (using custom dir) ==="
-    (
-      export TEST_CONFIG_DIR=$(mktemp -d)
-      echo "test config from custom dir" > "$TEST_CONFIG_DIR/test-config.txt"
-
-      output=$(${wrappedWithEnvVarFallback}/bin/test-app)
-      if echo "$output" | grep -q "Config file found at: $TEST_CONFIG_DIR/test-config.txt"; then
-        echo "PASS: Custom TEST_CONFIG_DIR works correctly"
-      else
-        echo "FAIL: Custom TEST_CONFIG_DIR did not work"
-        echo "Output: $output"
-        exit 1
-      fi
-
-      if echo "$output" | grep -q "test config from custom dir"; then
-        echo "PASS: Config file from custom dir read correctly"
-      else
-        echo "FAIL: Config file from custom dir not read"
-        exit 1
-      fi
-    )
-
-    # Test 3: Absolute path outside store
-    echo -e "\n=== Test 3: Absolute path outside store ==="
-    echo "test config from /tmp" > /tmp/test-config.txt
-
-    output=$(${wrappedWithAbsolutePath}/bin/test-app)
-    if echo "$output" | grep -q "Config file found at: /tmp/test-config.txt"; then
-      echo "PASS: Absolute path works correctly"
+    output=$(${wrappedWithEnvVar}/bin/test-app)
+    if echo "$output" | grep -q "Config file found at: $HOME/test-config.txt"; then
+      echo "PASS: \$HOME environment variable expanded correctly"
     else
-      echo "FAIL: Absolute path did not work"
+      echo "FAIL: \$HOME not expanded correctly"
       echo "Output: $output"
       exit 1
     fi
 
-    # Test 4: Default behavior (store content)
-    echo -e "\n=== Test 4: Default behavior (store content) ==="
-    output=$(${wrappedWithStoreContent}/bin/test-app)
-    if echo "$output" | grep -q "Config file found at: /nix/store"; then
-      echo "PASS: Store path works correctly"
+    if echo "$output" | grep -q "test config from HOME"; then
+      echo "PASS: Config file contents read correctly"
     else
-      echo "FAIL: Store path did not work"
+      echo "FAIL: Config file contents not read"
+      echo "Output: $output"
+      exit 1
+    fi
+  )
+
+  # Test 2: Environment variable with fallback - using fallback
+  echo -e "\n=== Test 2: Environment variable with fallback (using fallback) ==="
+  (
+    export HOME=$(mktemp -d)
+    unset TEST_CONFIG_DIR
+    echo "test config from fallback HOME" > "$HOME/test-config.txt"
+
+    output=$(${wrappedWithEnvVarFallback}/bin/test-app)
+    if echo "$output" | grep -q "Config file found at: $HOME/test-config.txt"; then
+      echo "PASS: Fallback to \$HOME works correctly"
+    else
+      echo "FAIL: Fallback did not work"
+      echo "Output: $output"
+      exit 1
+    fi
+  )
+
+  # Test 2b: Environment variable with fallback - using custom dir
+  echo -e "\n=== Test 2b: Environment variable with fallback (using custom dir) ==="
+  (
+    export TEST_CONFIG_DIR=$(mktemp -d)
+    echo "test config from custom dir" > "$TEST_CONFIG_DIR/test-config.txt"
+
+    output=$(${wrappedWithEnvVarFallback}/bin/test-app)
+    if echo "$output" | grep -q "Config file found at: $TEST_CONFIG_DIR/test-config.txt"; then
+      echo "PASS: Custom TEST_CONFIG_DIR works correctly"
+    else
+      echo "FAIL: Custom TEST_CONFIG_DIR did not work"
       echo "Output: $output"
       exit 1
     fi
 
-    if echo "$output" | grep -q "This is store content"; then
-      echo "PASS: Store content read correctly"
+    if echo "$output" | grep -q "test config from custom dir"; then
+      echo "PASS: Config file from custom dir read correctly"
     else
-      echo "FAIL: Store content not read"
-      echo "Output: $output"
+      echo "FAIL: Config file from custom dir not read"
       exit 1
     fi
+  )
 
-    echo -e "\n=== SUCCESS: All types.file environment variable tests passed ==="
-    touch $out
-  ''
+  # Test 3: Absolute path outside store
+  echo -e "\n=== Test 3: Absolute path outside store ==="
+  echo "test config from /tmp" > /tmp/test-config.txt
+
+  output=$(${wrappedWithAbsolutePath}/bin/test-app)
+  if echo "$output" | grep -q "Config file found at: /tmp/test-config.txt"; then
+    echo "PASS: Absolute path works correctly"
+  else
+    echo "FAIL: Absolute path did not work"
+    echo "Output: $output"
+    exit 1
+  fi
+
+  # Test 4: Default behavior (store content)
+  echo -e "\n=== Test 4: Default behavior (store content) ==="
+  output=$(${wrappedWithStoreContent}/bin/test-app)
+  if echo "$output" | grep -q "Config file found at: /nix/store"; then
+    echo "PASS: Store path works correctly"
+  else
+    echo "FAIL: Store path did not work"
+    echo "Output: $output"
+    exit 1
+  fi
+
+  if echo "$output" | grep -q "This is store content"; then
+    echo "PASS: Store content read correctly"
+  else
+    echo "FAIL: Store content not read"
+    echo "Output: $output"
+    exit 1
+  fi
+
+  echo -e "\n=== SUCCESS: All types.file environment variable tests passed ==="
+  touch $out
+''
