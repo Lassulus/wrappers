@@ -86,10 +86,10 @@ in
     };
     ignoreFile = lib.mkOption {
       type = wlib.types.file config.pkgs;
-      default.content = lib.strings.concatLines config.ignores;
     };
   };
-  config.package = lib.mkDefault config.pkgs.helix;
+  config.ignoreFile.content = lib.strings.concatLines config.ignores;
+  config.package = config.pkgs.helix;
   config.env = {
     XDG_CONFIG_HOME = builtins.toString (
       config.pkgs.linkFarm "helix-merged-config" (

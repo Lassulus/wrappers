@@ -19,7 +19,7 @@ in
   };
 
   config = {
-    package = lib.mkDefault config.pkgs.jujutsu;
+    package = config.pkgs.jujutsu;
     env = {
       JJ_CONFIG = builtins.toString (tomlFmt.generate "jujutsu.toml" config.settings);
     };

@@ -23,7 +23,7 @@
     "--env-config" = config."env.nu".path;
   };
 
-  config.package = lib.mkDefault config.pkgs.nushell;
+  config.package = config.pkgs.nushell;
 
   config.meta.maintainers = [
     {

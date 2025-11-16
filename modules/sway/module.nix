@@ -7,26 +7,20 @@
 {
   _class = "wrapper";
   options = {
-    swayConfig = lib.mkOption {
+    configFile = lib.mkOption {
       type = wlib.types.file config.pkgs;
       default.content = "";
       description = ''
         Sway window manager configuration.
       '';
     };
-    extraFlags = lib.mkOption {
-      type = lib.types.attrsOf lib.types.unspecified;
-      default = { };
-      description = "Extra flags to pass to sway.";
-    };
   };
 
   config.flags = {
-    "--config" = config.swayConfig.path;
-  }
-  // config.extraFlags;
+    "--config" = config.configFile.path;
+  };
 
-  config.package = lib.mkDefault config.pkgs.sway;
+  config.package = config.pkgs.sway;
 
   config.meta.maintainers = [
     {

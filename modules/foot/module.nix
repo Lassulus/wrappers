@@ -18,11 +18,6 @@ in
         See {manpage}`foot.ini(5)`
       '';
     };
-    extraFlags = lib.mkOption {
-      type = lib.types.attrsOf lib.types.unspecified;
-      default = { };
-      description = "Extra flags to pass to foot.";
-    };
     "foot.ini" = lib.mkOption {
       type = wlib.types.file config.pkgs;
       description = "foot.init configuration file.";
@@ -31,9 +26,8 @@ in
   };
   config.flags = {
     "--config" = config."foot.ini".path;
-  }
-  // config.extraFlags;
-  config.package = lib.mkDefault config.pkgs.foot;
+  };
+  config.package = config.pkgs.foot;
   config.meta.maintainers = [ lib.maintainers.randomdude ];
   config.meta.platforms = lib.platforms.linux;
 }
