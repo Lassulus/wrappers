@@ -2,7 +2,6 @@
   pkgs,
   self,
 }:
-
 let
   waybarWrapped =
     (self.wrapperModules.waybar.apply {
@@ -15,7 +14,7 @@ let
         modules-center = [ ];
       };
 
-      style.content = "";
+      "style.css".content = "";
 
     }).wrapper;
 

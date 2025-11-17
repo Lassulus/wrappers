@@ -6,7 +6,6 @@
 }:
 let
   jsonFmt = config.pkgs.formats.json { };
-  conf = jsonFmt.generate "waybar-config" config.settings;
 in
 {
   _class = "wrapper";
@@ -29,7 +28,26 @@ in
         ];
       };
     };
-    style = lib.mkOption {
+    configFile = lib.mkOption {
+      type = wlib.types.file config.pkgs;
+      default.path = jsonFmt.generate "waybar-config" config.settings;
+      description = ''
+        Waybar configuration settings file.
+        See <https://github.com/Alexays/Waybar/wiki/Configuration>
+      '';
+      example = ''
+        {
+          "height": 30,
+          "layer": "top",
+          "modules-center": [],
+          "modules-left": [
+            "sway/workspaces",
+            "niri/workspaces"
+          ]
+        }
+      '';
+    };
+    "style.css" = lib.mkOption {
       type = wlib.types.file config.pkgs;
       default.content = "";
       description = "CSS style for Waybar.";
@@ -38,8 +56,8 @@ in
 
   config.package = lib.mkDefault config.pkgs.waybar;
   config.flags = {
-    "--config" = conf;
-    "--style" = config.style.path;
+    "--config" = config.configFile.path;
+    "--style" = config."style.css".path;
   };
   config.meta.maintainers = [
     {
