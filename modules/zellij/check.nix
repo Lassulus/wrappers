@@ -7,7 +7,7 @@ let
   zellijWrapped =
     (self.wrapperModules.zellij.apply {
       inherit pkgs;
-      settings.content = ''
+      "config.kdl".content = ''
         layout_dir "/some/path"
       '';
     }).wrapper;

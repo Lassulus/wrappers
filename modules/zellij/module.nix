@@ -7,7 +7,7 @@
 
 {
   options = {
-    settings = lib.mkOption {
+    "config.kdl" = lib.mkOption {
       type = wlib.types.file config.pkgs;
       description = ''
         Settings in KDL format
@@ -19,7 +19,7 @@
   config = {
     package = lib.mkDefault config.pkgs.zellij;
     env = {
-      ZELLIJ_CONFIG_FILE = builtins.toString config.settings.path;
+      ZELLIJ_CONFIG_FILE = builtins.toString config."config.kdl".path;
     };
 
     meta = {
