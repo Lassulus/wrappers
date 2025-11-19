@@ -9,17 +9,18 @@ let
     package = pkgs.hello;
     flags = {
       "--greeting" = "hi";
-      "--verbose" = { };
+      "--verbose" = true;
       "--debug" = false;
-      "--trace" = null;
+      "--trace" = false;
+      "--empty" = [ ];
       "--output" = "file.txt";
     };
     flagSeparator = " ";
   };
 
 in
-pkgs.runCommand "flags-null-false-test" { } ''
-  echo "Testing that false and null flags are omitted..."
+pkgs.runCommand "flags-false-test" { } ''
+  echo "Testing that false and empty list flags are omitted..."
 
   wrapperScript="${wrappedPackage}/bin/hello"
   if [ ! -f "$wrapperScript" ]; then
@@ -66,11 +67,17 @@ pkgs.runCommand "flags-null-false-test" { } ''
   fi
 
   if grep -q -- "--trace" "$wrapperScript"; then
-    echo "FAIL: --trace flag should be omitted (value was null)"
+    echo "FAIL: --trace flag should be omitted (value was false)"
     cat "$wrapperScript"
     exit 1
   fi
 
-  echo "SUCCESS: false and null flags correctly omitted"
+  if grep -q -- "--empty" "$wrapperScript"; then
+    echo "FAIL: --empty flag should be omitted (value was empty list)"
+    cat "$wrapperScript"
+    exit 1
+  fi
+
+  echo "SUCCESS: false and empty list flags correctly omitted"
   touch $out
 ''

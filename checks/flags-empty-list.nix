@@ -10,13 +10,15 @@ let
     flags = {
       "--greeting" = "hi";
       "--verbose" = true;
+      "--empty" = [ ];
+      "--output" = "file.txt";
     };
     flagSeparator = " ";
   };
 
 in
-pkgs.runCommand "flags-space-separator-test" { } ''
-  echo "Testing flags with space separator..."
+pkgs.runCommand "flags-empty-list-test" { } ''
+  echo "Testing flags with empty list..."
 
   wrapperScript="${wrappedPackage}/bin/hello"
   if [ ! -f "$wrapperScript" ]; then
@@ -24,8 +26,7 @@ pkgs.runCommand "flags-space-separator-test" { } ''
     exit 1
   fi
 
-  # Check that flags with space separator are formatted correctly
-  # Should have --greeting and hi as separate arguments
+  # Check that flags with non-empty values are present
   if ! grep -q -- "--greeting" "$wrapperScript"; then
     echo "FAIL: --greeting flag not found"
     cat "$wrapperScript"
@@ -33,7 +34,7 @@ pkgs.runCommand "flags-space-separator-test" { } ''
   fi
 
   if ! grep -q "hi" "$wrapperScript"; then
-    echo "FAIL: 'hi' argument not found"
+    echo "FAIL: greeting value 'hi' not found"
     cat "$wrapperScript"
     exit 1
   fi
@@ -44,6 +45,19 @@ pkgs.runCommand "flags-space-separator-test" { } ''
     exit 1
   fi
 
-  echo "SUCCESS: Space separator test passed"
+  if ! grep -q -- "--output" "$wrapperScript"; then
+    echo "FAIL: --output flag not found"
+    cat "$wrapperScript"
+    exit 1
+  fi
+
+  # Check that empty list flag is NOT present
+  if grep -q -- "--empty" "$wrapperScript"; then
+    echo "FAIL: --empty flag should be omitted (value was empty list)"
+    cat "$wrapperScript"
+    exit 1
+  fi
+
+  echo "SUCCESS: empty list flags correctly omitted"
   touch $out
 ''

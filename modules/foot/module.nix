@@ -25,7 +25,7 @@ in
     };
   };
   config.flags = {
-    "--config" = config."foot.ini".path;
+    "--config" = toString config."foot.ini".path;
   };
   config.package = config.pkgs.foot;
   config.meta.maintainers = [ lib.maintainers.randomdude ];

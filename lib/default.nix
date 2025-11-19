@@ -1,35 +1,66 @@
 { lib }:
 let
+  /**
+    flagToArgs {
+      flagSeparator: str,
+      name: str,
+      flag: bool | str | [ str | [ str ] ]
+    } -> [ str
+  */
+  flagToArgs =
+    {
+      flagSeparator ? " ",
+      name,
+      flag,
+    }:
+    if flag == false then
+      [ ]
+    else if flag == true then
+      [ name ]
+    else if builtins.isString flag then
+      if flagSeparator == " " then
+        [
+          name
+          flag
+        ]
+      else
+        [ "${name}${flagSeparator}${flag}" ]
+
+    else if lib.isList flag then
+      lib.concatMap (
+        v:
+        if builtins.isString v then
+          if flagSeparator == " " then
+            [
+              name
+              v
+            ]
+          else
+            [ "${name}${flagSeparator}${v}" ]
+        else if builtins.isList v then
+          [ name ]
+          ++ (map (
+            v_:
+            if builtins.isString v_ then
+              v_
+            else
+              throw "flag ${name} has unsupported list element type ${lib.typeOf v_}, expected str"
+          ) v)
+        else
+          throw "flag ${name} has unsupported list element type ${lib.typeOf v}, expected str or list"
+      ) flag
+    else
+      throw "flag ${name} has unsupported type ${lib.typeOf flag}, expected bool, str, or list";
+
   # Helper function to generate args list from flags attrset
   generateArgsFromFlags =
     flags: flagSeparator:
-    lib.flatten (
+    lib.concatLists (
       lib.mapAttrsToList (
-        name: value:
-        if value == false || value == null then
-          [ ]
-        else if value == { } then
-          [ name ]
-        else if lib.isList value then
-          lib.flatten (
-            map (
-              v:
-              if flagSeparator == " " then
-                [
-                  name
-                  (toString v)
-                ]
-              else
-                [ "${name}${flagSeparator}${toString v}" ]
-            ) value
-          )
-        else if flagSeparator == " " then
-          [
-            name
-            (toString value)
-          ]
-        else
-          [ "${name}${flagSeparator}${toString value}" ]
+        name: flag:
+        flagToArgs {
+          inherit flagSeparator name flag;
+        }
       ) flags
     );
 
@@ -655,6 +686,7 @@ let
       wrapPackage
       escapeShellArgWithEnv
       generateArgsFromFlags
+      flagToArgs
       ;
   };
 in
