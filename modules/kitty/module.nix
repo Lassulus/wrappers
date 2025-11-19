@@ -18,7 +18,7 @@
   };
 
   config.flags = {
-    "--config" = config."kitty.conf".path;
+    "--config" = toString config."kitty.conf".path;
   };
 
   config.package = config.pkgs.kitty;

@@ -10,7 +10,7 @@ let
       config.package = config.pkgs.hello;
       config.flags = {
         "--greeting" = "world";
-        "--silent" = { };
+        "--silent" = true;
       };
     }
   );
