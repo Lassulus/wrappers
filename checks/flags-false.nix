@@ -9,9 +9,9 @@ let
     package = pkgs.hello;
     flags = {
       "--greeting" = "hi";
-      "--verbose" = { };
+      "--verbose" = true;
       "--debug" = false;
-      "--trace" = null;
+      "--trace" = false;
       "--output" = "file.txt";
     };
     flagSeparator = " ";
@@ -66,11 +66,11 @@ pkgs.runCommand "flags-null-false-test" { } ''
   fi
 
   if grep -q -- "--trace" "$wrapperScript"; then
-    echo "FAIL: --trace flag should be omitted (value was null)"
+    echo "FAIL: --trace flag should be omitted (value was false)"
     cat "$wrapperScript"
     exit 1
   fi
 
-  echo "SUCCESS: false and null flags correctly omitted"
+  echo "SUCCESS: false flags correctly omitted"
   touch $out
 ''

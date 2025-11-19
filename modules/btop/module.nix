@@ -17,7 +17,7 @@
   };
 
   config.flags = {
-    "--config" = config."btop.conf".path;
+    "--config" = toString config."btop.conf".path;
   };
 
   config.package = config.pkgs.btop;

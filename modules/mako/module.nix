@@ -34,7 +34,7 @@ in
 
   config.flagSeparator = "=";
   config.flags = {
-    "--config" = config.configFile.path;
+    "--config" = toString config.configFile.path;
   };
 
   config.package = config.pkgs.mako;
