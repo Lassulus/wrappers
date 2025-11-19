@@ -114,13 +114,6 @@ in
   options = {
     "config.rasi" = lib.mkOption {
       type = wlib.types.file config.pkgs;
-      default.content =
-        toRasi {
-          configuration = config.settings;
-        }
-        + (lib.optionalString (theme != null) (toRasi {
-          "@theme" = theme;
-        }));
     };
 
     settings = lib.mkOption {
@@ -147,20 +140,20 @@ in
         ]);
       default = null;
     };
-
-    extraFlags = lib.mkOption {
-      type = lib.types.attrsOf lib.types.unspecified; # TODO add list handling
-      default = { };
-      description = "Extra flags to pass to rofi.";
-    };
   };
+  config."config.rasi".content =
+    toRasi {
+      configuration = config.settings;
+    }
+    + (lib.optionalString (theme != null) (toRasi {
+      "@theme" = theme;
+    }));
 
   config.flags = {
     "-config" = config."config.rasi".path;
-  }
-  // config.extraFlags;
+  };
 
-  config.package = lib.mkDefault (
+  config.package = (
     config.pkgs.rofi.override (old: {
       plugins = (old.plugins or [ ]) ++ config.plugins;
     })

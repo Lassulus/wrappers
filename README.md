@@ -235,7 +235,7 @@ Wraps mpv with configuration file support and script management:
     RIGHT seek 5
     LEFT seek -5
   '';
-  extraFlags = {
+  flags = {
     "--save-position-on-quit" = {};
   };
 }).wrapper

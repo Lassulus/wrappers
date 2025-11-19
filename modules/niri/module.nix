@@ -32,9 +32,9 @@
     "share/applications/*.desktop"
     "share/systemd/user/niri.service"
   ];
-  config.package = lib.mkDefault config.pkgs.niri;
+  config.package = config.pkgs.niri;
   config.env = {
-    NIRI_CONFIG = builtins.toString config."config.kdl".path;
+    NIRI_CONFIG = toString config."config.kdl".path;
   };
   config.meta.maintainers = [
     {

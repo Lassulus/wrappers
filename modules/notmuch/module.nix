@@ -6,7 +6,6 @@
 }:
 let
   iniFmt = config.pkgs.formats.ini { };
-  writeNotmuchConfig = cfg: iniFmt.generate "notmuch.ini" cfg;
 in
 {
   _class = "wrapper";
@@ -22,7 +21,7 @@ in
     };
     configFile = lib.mkOption {
       type = wlib.types.file config.pkgs;
-      default.path = toString (writeNotmuchConfig config.settings);
+      default.path = toString (iniFmt.generate "notmuch.ini" config.settings);
     };
   };
   config.package = config.pkgs.notmuch;

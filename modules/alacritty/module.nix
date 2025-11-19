@@ -18,11 +18,6 @@ in
         See {manpage}`alacritty(5)` or <https://alacritty.org/config-alacritty.html>
       '';
     };
-    extraFlags = lib.mkOption {
-      type = lib.types.attrsOf lib.types.unspecified;
-      default = { };
-      description = "Extra flags to pass to alacritty.";
-    };
     "alacritty.toml" = lib.mkOption {
       type = wlib.types.file config.pkgs;
       # TODO add a pure toTOML function
@@ -32,8 +27,7 @@ in
   };
   config.flags = {
     "--config-file" = config."alacritty.toml".path;
-  }
-  // config.extraFlags;
-  config.package = lib.mkDefault config.pkgs.alacritty;
+  };
+  config.package = config.pkgs.alacritty;
   config.meta.maintainers = [ lib.maintainers.zimward ];
 }

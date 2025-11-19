@@ -8,7 +8,7 @@ let
     (self.wrapperModules.sway.apply {
       inherit pkgs;
 
-      swayConfig.content = ''
+      configFile.content = ''
         # Test config
         set $mod Mod4
         bindsym $mod+Return exec alacritty
