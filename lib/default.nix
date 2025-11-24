@@ -419,8 +419,7 @@ let
       flagSeparator ? " ",
       # " " for "--flag value" or "=" for "--flag=value"
       args ? generateArgsFromFlags flags flagSeparator,
-      # Whether to escape the final shell arguments, e.g. put quotes around them
-      escapeArgs ? true,
+      unquotedArgs ? [ ],
       preHook ? "",
       passthru ? { },
       aliases ? [ ],
@@ -459,13 +458,13 @@ let
 
       # Generate flag arguments with proper line breaks and indentation
       flagsString =
-        if args == [ ] then
+        if args == [ ] && unquotedArgs == [ ] then
           ""
         else
-          let
-            escapeFn = if escapeArgs then wrapperLib.escapeShellArgWithEnv else x: x;
-          in
-          " \\\n  " + lib.concatStringsSep " \\\n  " (map escapeFn args);
+          " \\\n  "
+          + lib.concatStringsSep " \\\n  " (
+            if unquotedArgs != [ ] then unquotedArgs else map wrapperLib.escapeShellArgWithEnv args
+          );
 
       finalWrapper = wrapper {
         inherit
