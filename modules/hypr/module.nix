@@ -12,8 +12,9 @@ in
   options = {
     ${hypr_config} = lib.mkOption {
       type = wlib.types.file config.pkgs;
-      default = { };
+      default.content = "";
       description = ''
+        for basic setup of one hypr.conf file
       '';
     };
   };
