@@ -48,7 +48,7 @@ let
         };
       };
 
-      config.flags."--verbose" = lib.mkIf config.verboseMode { };
+      config.flags."--verbose" = config.verboseMode;
     }
   );
 

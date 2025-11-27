@@ -6,11 +6,11 @@
 let
   # Create a simple wrapper module
   helloModule = self.lib.wrapModule (
-    { config, ... }:
+    { config, lib, ... }:
     {
       config.package = config.pkgs.hello;
       config.flags = {
-        "--greeting" = "initial";
+        "--greeting" = lib.mkDefault "initial";
       };
     }
   );
@@ -18,21 +18,24 @@ let
   # Apply with initial settings
   initialConfig = helloModule.apply {
     inherit pkgs;
-    flags."--verbose" = { };
+    flags."--verbose" = true;
   };
 
   # Extend the configuration
-  extendedConfig = initialConfig.apply {
-    flags."--greeting" = "extended";
-    flags."--extra" = "flag";
-  };
+  extendedConfig = initialConfig.apply (
+    { lib, ... }:
+    {
+      flags."--greeting" = "extended";
+      flags."--extra" = "flag";
+    }
+  );
 
   # Test mkForce to override a value
   forcedConfig = initialConfig.apply (
     { lib, ... }:
     {
       flags."--greeting" = lib.mkForce "forced";
-      flags."--forced-flag" = { };
+      flags."--forced-flag" = true;
     }
   );
 
@@ -42,15 +45,21 @@ let
   };
 
   # Test chaining apply multiple levels deep
-  doubleApply = extendedConfig.apply {
-    flags."--greeting" = "double";
-    flags."--double" = "level2";
-  };
+  doubleApply = extendedConfig.apply (
+    { lib, ... }:
+    {
+      flags."--greeting" = lib.mkOverride 90 "double";
+      flags."--double" = "level2";
+    }
+  );
 
-  tripleApply = doubleApply.apply {
-    flags."--greeting" = "triple";
-    flags."--triple" = "level3";
-  };
+  tripleApply = doubleApply.apply (
+    { lib, ... }:
+    {
+      flags."--greeting" = lib.mkOverride 80 "triple";
+      flags."--triple" = "level3";
+    }
+  );
 
 in
 pkgs.runCommand "extend-test" { } ''
@@ -134,8 +143,15 @@ pkgs.runCommand "extend-test" { } ''
   fi
 
   # Check double apply - greeting should be "double" (not "extended")
-  if ! grep -q "double" "$doubleScript"; then
+  if ! grep -q '"double"' "$doubleScript"; then
     echo "FAIL: double apply should have 'double' greeting"
+    cat "$doubleScript"
+    exit 1
+  fi
+
+  # Make sure it's not merged/concatenated with other values
+  if grep -q '"extendeddouble"' "$doubleScript" || grep -q '"doubleextended"' "$doubleScript"; then
+    echo "FAIL: double apply greeting was incorrectly merged with other values"
     cat "$doubleScript"
     exit 1
   fi
@@ -160,8 +176,15 @@ pkgs.runCommand "extend-test" { } ''
   fi
 
   # Check triple apply - greeting should be "triple" (newest wins)
-  if ! grep -q "triple" "$tripleScript"; then
+  if ! grep -q '"triple"' "$tripleScript"; then
     echo "FAIL: triple apply should have 'triple' greeting"
+    cat "$tripleScript"
+    exit 1
+  fi
+
+  # Make sure it's not merged/concatenated with other values
+  if grep -q '"doubletriple"' "$tripleScript" || grep -q '"tripledouble"' "$tripleScript" || grep -q '"extendedtriple"' "$tripleScript"; then
+    echo "FAIL: triple apply greeting was incorrectly merged with other values"
     cat "$tripleScript"
     exit 1
   fi

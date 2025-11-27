@@ -26,7 +26,7 @@ in
     };
   };
   config.flags = {
-    "--config-file" = config."alacritty.toml".path;
+    "--config-file" = toString config."alacritty.toml".path;
   };
   config.package = config.pkgs.alacritty;
   config.meta.maintainers = [ lib.maintainers.zimward ];
