@@ -17,7 +17,7 @@
   };
 
   config = {
-    package = lib.mkDefault config.pkgs.zellij;
+    package = config.pkgs.zellij;
     env = {
       ZELLIJ_CONFIG_FILE = builtins.toString config."config.kdl".path;
     };
