@@ -62,7 +62,7 @@ wrappers.lib.wrapPackage {
     CURL_CA_BUNDLE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
   };
   flags = {
-    "--silent" = {};
+    "--silent" = true;
     "--connect-timeout" = "30";
   };
   # Or use args directly for more control:
@@ -86,7 +86,7 @@ wrappers.lib.wrapPackage {
   binName = "my-ls";
   flags = {
     "--color" = "auto";
-    "-l" = {};
+    "-l" = true;
   };
 }
 ```
@@ -132,7 +132,7 @@ Arguments:
 - `runtimeInputs`: List of packages added to PATH (default: `[]`)
 - `env`: Attribute set of environment variables (default: `{}`)
 - `flags`: Attribute set of command-line flags (default: `{}`)
-  - Value `{}`: Flag without argument (e.g., `--verbose`)
+  - Value `true`: Flag without argument (e.g., `--verbose`)
   - Value `"string"`: Flag with argument (e.g., `--output "file.txt"`)
   - Value `false` or `null`: Flag omitted
 - `flagSeparator`: Separator between flag name and value when generating args from flags (default: `" "`, can be `"="`)
@@ -236,7 +236,7 @@ Wraps mpv with configuration file support and script management:
     LEFT seek -5
   '';
   flags = {
-    "--save-position-on-quit" = {};
+    "--save-position-on-quit" = true;
   };
 }).wrapper
 ```
