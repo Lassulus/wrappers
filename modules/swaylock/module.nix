@@ -43,7 +43,7 @@ in
     };
   };
 
-  config.flags."--config" = config.configFile.path;
+  config.flags."--config" = toString config.configFile.path;
 
   config.package = config.pkgs.swaylock;
 
