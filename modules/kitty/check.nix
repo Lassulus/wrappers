@@ -8,9 +8,12 @@ let
     (self.wrapperModules.kitty.apply {
       inherit pkgs;
 
-      "kitty.conf".content = ''
-        font_size 12.0
-        cursor_text_color #111111
+      settings = {
+        font_size = 12;
+        cursor_text_color = "#111111";
+      };
+
+      extraSettings = ''
         cursor_shape block
       '';
     }).wrapper;
