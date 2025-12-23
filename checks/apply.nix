@@ -8,8 +8,14 @@ let
   helloModule = self.lib.wrapModule (
     { config, lib, ... }:
     {
+      options.test = lib.mkOption {
+        type = lib.types.submodule {
+          freeformType = lib.types.attrs;
+        };
+      };
       config.package = config.pkgs.hello;
       config.flags = {
+        "--ff" = config.test.freeform;
         "--greeting" = lib.mkDefault "initial";
       };
     }
@@ -18,6 +24,7 @@ let
   # Apply with initial settings
   initialConfig = helloModule.apply {
     inherit pkgs;
+    test.freeform = "freeform1";
     flags."--verbose" = true;
   };
 
@@ -25,6 +32,7 @@ let
   extendedConfig = initialConfig.apply (
     { lib, ... }:
     {
+      test.freeform = "freeform2";
       flags."--greeting" = "extended";
       flags."--extra" = "flag";
     }
@@ -86,6 +94,14 @@ pkgs.runCommand "extend-test" { } ''
     exit 1
   fi
 
+  # check if the config has the flag from the freeform attrs
+  if ! grep -q -- "--ff" "$initialScript"; then
+    echo "FAIL: config should have --ff flag"
+    cat "$initialScript"
+    exit 1
+  fi
+
+
   # Check extended config has extended greeting (overriding initial)
   if ! grep -q "extended" "$extendedScript"; then
     echo "FAIL: extended config should have 'extended' greeting"
@@ -103,6 +119,13 @@ pkgs.runCommand "extend-test" { } ''
   # Check extended config has extra flag (from apply)
   if ! grep -q -- "--extra" "$extendedScript"; then
     echo "FAIL: extended config should have --extra flag"
+    cat "$extendedScript"
+    exit 1
+  fi
+
+  # check if the config has the flag from the freeform attrs
+  if ! grep -q -- "freeform2" "$extendedScript"; then
+    echo "FAIL: extended config --ff flag should have the value freeform2"
     cat "$extendedScript"
     exit 1
   fi
