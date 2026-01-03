@@ -59,6 +59,9 @@ in
     "--config" = toString config.configFile.path;
     "--style" = toString config."style.css".path;
   };
+  config.filesToPatch = [
+    "share/systemd/user/waybar.service"
+  ];
   config.meta.maintainers = [
     {
       name = "turbio";
