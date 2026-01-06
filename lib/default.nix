@@ -319,13 +319,13 @@ let
             { config, ... }:
             {
               options = {
-                _moduleSettings = lib.mkOption {
-                  type = lib.types.raw;
+                _appliedModules = lib.mkOption {
+                  type = lib.types.listOf lib.types.raw;
                   internal = true;
-                  default = { };
+                  default = [ ];
                   description = ''
-                    Internal option storing the settings module passed to apply.
-                    Used by apply to re-evaluate with additional modules.
+                    Internal option storing the list of modules applied via extend/apply.
+                    Used by extend to re-evaluate with all accumulated modules.
                   '';
                 };
                 extend = lib.mkOption {
@@ -336,18 +336,12 @@ let
                   '';
                   default =
                     module:
+                    let
+                      allModules = config._appliedModules ++ [ module ];
+                    in
                     eval.extendModules {
-                      modules = [
-                        config._moduleSettings
-                        module
-                        {
-                          _moduleSettings = lib.mkForce {
-                            imports = [
-                              config._moduleSettings
-                              module
-                            ];
-                          };
-                        }
+                      modules = allModules ++ [
+                        { _appliedModules = lib.mkForce allModules; }
                       ];
                     };
                 };
