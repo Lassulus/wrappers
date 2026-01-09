@@ -4,13 +4,10 @@
   wlib,
   ...
 }:
-let
-  hypr_config = "hypr.conf";
-in
 {
   _class = "wrapper";
   options = {
-    ${hypr_config} = lib.mkOption {
+   "hypr.conf" = lib.mkOption {
       type = wlib.types.file config.pkgs;
       default.content = "";
       description = ''
@@ -20,7 +17,7 @@ in
   };
 
   config.flags = {
-    "--config" = config.${hypr_config}.path;
+    "--config" = config."hypr.conf".path;
   };
 
   config.package = config.pkgs.hyprland;
