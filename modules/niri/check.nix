@@ -66,9 +66,7 @@ let
           "foo" = {
             open-on-output = "DP-3";
           };
-          "bar" = {
-            open-on-output = "DP-3";
-          };
+          "bar" = null;
         };
 
         outputs = {
