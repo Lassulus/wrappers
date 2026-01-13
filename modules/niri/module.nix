@@ -88,10 +88,14 @@ let
         map attrsToKdl (
           lib.mapAttrsToList (n: v: {
             # use the attr name as attribute for the workspace node
-            workspace = {
-              _attrs = n;
-            }
-            // v;
+            workspace =
+              if v != null then
+                {
+                  _attrs = n;
+                }
+                // v
+              else
+                n;
           }) w
         );
       mkOutputs =
@@ -191,12 +195,13 @@ in
           };
           workspaces = lib.mkOption {
             default = { };
-            type = lib.types.attrs;
+            type = lib.types.attrsOf (lib.types.nullOr lib.types.anything);
             description = "Named workspace definitons";
             example = {
               "foo" = {
                 open-on-output = "DP-3";
               };
+              "bar" = null;
             };
           };
           outputs = lib.mkOption {
