@@ -20,7 +20,7 @@ let
       ) wlib.modules
     )
   );
-  optionsToRender = builtins.removeAttrs options config.docs.ignoreOptions;
+  optionsToRender = removeAttrs options config.docs.ignoreOptions;
   nixosOptionsDoc = config.pkgs.nixosOptionsDoc {
     options = optionsToRender;
     warningsAreErrors = config.docs.warningsAreErrors;
@@ -48,6 +48,18 @@ in
     json = lib.mkOption {
       type = lib.types.package;
       default = nixosOptionsDoc.optionsJSON;
+    };
+    html = lib.mkOption {
+      type = lib.types.package;
+      default = config.pkgs.stdenvNoCC.mkDerivation {
+        name = "docs-${config.package.name}.html";
+        src = config.docs.commonMark;
+        dontUnpack = true;
+        nativeBuildInputs = [ config.pkgs.pandoc ];
+        buildPhase = ''
+          pandoc -f markdown -t html $src > $out
+        '';
+      };
     };
   };
 }
