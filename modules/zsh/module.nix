@@ -3,7 +3,11 @@
   lib,
   wlib,
   ...
-}: {
+}: let
+  kvFmt = config.pkgs.formats.keyValue {
+    listsAsDuplicateKeys = true;
+  };
+in {
   _class = "wrapper";
   options = {
     settings = {
@@ -17,6 +21,7 @@
         '';
         default = "emacs";
       };
+
       autocd = lib.mkOption {
         type = lib.types.bool;
         description = ''
@@ -32,11 +37,19 @@
         '';
       };
 
+      shellAliases = lib.mkOption {
+        type = with lib.types; attrsOf str;
+        description = ''
+          aliases
+        '';
+        default = {};
+      };
+
       history = {
         saveNoDups = lib.mkOption {
           type = lib.types.bool;
           description = ''
-            doesnt save a new line if you type in a command already in the history, defaults to false.
+            doesn't save a new line if you type in a command already in the history, defaults to false.
           '';
           default = false;
         };
@@ -85,6 +98,9 @@
               then "bindkey -vi"
               else "bindkey -e"
             )
+            (
+              kvFmt.generate "aliases-config" config.settings.shellAliases
+            )
           ];
         };
       };
@@ -93,8 +109,6 @@
   config = {
     flagSeparator = "=";
     flags = {
-      "--vim" = config.settings.keyMap == "vim";
-      "--emacs" = config.settings.keyMap == "emacs";
       "--histsavenodups" = config.settings.history.saveNoDups;
       "--histexpiredupsfirst" = config.settings.history.expireDuplicatesFirst;
       "--histappend" = config.settings.history.append;
