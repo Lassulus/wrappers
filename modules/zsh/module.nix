@@ -3,12 +3,16 @@
   lib,
   wlib,
   ...
-}: {
+}:
+{
   _class = "wrapper";
   options = {
     settings = {
       keyMap = lib.mkOption {
-        type = lib.types.enum ["vim" "emacs"];
+        type = lib.types.enum [
+          "vim"
+          "emacs"
+        ];
         description = ''
           keymap for zsh, pick between emacs and vi mode, defaults to emacs mode ( will add viins and vicmd options eventually).
         '';
