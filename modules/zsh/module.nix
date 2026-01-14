@@ -73,8 +73,8 @@
   config = {
     flagSeparator = "=";
     flags = {
-      "--vim" = lib.mkIf (config.settings.keyMap == "vim");
-      "--emacs" = lib.mkIf (config.settings.keyMap == "emacs");
+      "--vim" = lib.mkIf (config.settings.keyMap == "vim") true;
+      "--emacs" = lib.mkIf (config.settings.keyMap == "emacs") true;
       "--histsavenodups" = config.settings.history.saveNoDups;
       "--histexpiredupsfirst" = config.settings.history.expireDuplicatesFirst;
       "--histappend" = config.settings.history.append;
