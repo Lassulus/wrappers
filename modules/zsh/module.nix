@@ -4,7 +4,7 @@
   wlib,
   ...
 }: let
-  cfg = cfg;
+  cfg = config.settings;
 in {
   _class = "wrapper";
   options = {
