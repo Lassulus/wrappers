@@ -92,18 +92,20 @@ in {
       };
       ".zshrc" = lib.mkOption {
         type = wlib.types.file config.pkgs;
-
-        default.path = config.pkgs.concatText "zsh-config" [
-          (
-            lib.mkIf (config.settings.keyMap == "viins") "bindkey -v"
-            lib.mkIf (config.settings.keyMap == "viicmd") "bindkey -a"
-            lib.mkIf (config.settings.keyMap == "emacs") "bindkey -e"
-            toString
-            kvFmt.generate
-            "aliases-config"
-            config.settings.shellAliases
-          )
-        ];
+        default = let
+          aliasLines =
+            lib.mapAttrsToList (k: v: "alias -- ${k}=${v}")
+            config.settings.shellAliases;
+        in {
+          path = config.pkgs.concatText "zsh-config" [
+            (
+              lib.mkIf (config.settings.keyMap == "viins") "bindkey -v"
+              lib.mkIf (config.settings.keyMap == "viicmd") "bindkey -a"
+              lib.mkIf (config.settings.keyMap == "emacs") "bindkey -e"
+            )
+            aliasLines
+          ];
+        };
       };
     };
   };
