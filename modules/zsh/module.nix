@@ -39,6 +39,10 @@
         };
         expireDuplicatesFirst = lib.mkOption {
           type = lib.types.bool;
+          description = ''
+            expire duplicates first.
+          '';
+          default = false;
         };
         append = lib.mkOption {
           type = lib.types.bool;
