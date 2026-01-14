@@ -99,9 +99,11 @@ in {
         in {
           path = config.pkgs.concatText "zsh-config" [
             (
-              lib.mkIf (config.settings.keyMap == "viins") "bindkey -v"
-              lib.mkIf (config.settings.keyMap == "viicmd") "bindkey -a"
-              lib.mkIf (config.settings.keyMap == "emacs") "bindkey -e"
+              if config.settings.keyMap == "vicmd"
+              then "bindkey -a"
+              else if config.settings.keyMap == "viins"
+              then "bindkey -v"
+              else "bindkey -e"
             )
             aliasLines
           ];
