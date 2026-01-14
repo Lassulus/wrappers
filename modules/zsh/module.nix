@@ -3,8 +3,7 @@
   lib,
   wlib,
   ...
-}:
-{
+}: {
   _class = "wrapper";
   options = {
     settings = {
@@ -76,6 +75,19 @@
           default = true;
         };
       };
+      ".zshrc" = lib.mkOption {
+        type = wlib.types.file config.pkgs;
+        default = {
+          content = "";
+          path = config.pkgs.concatText "zsh-config" [
+            (
+              if config.settings.keyMap == "vim"
+              then "bindkey -vi"
+              else "bindkey -e"
+            )
+          ];
+        };
+      };
     };
   };
   config = {
@@ -92,6 +104,9 @@
       "--autocd" = config.settings.autocd;
       "--autolist" = config.settings.completion.enable;
       "--automenu" = config.settings.completion.enable;
+    };
+    env = {
+      Z_DOT_DIR = toString config.".zshrc".path + "..";
     };
 
     package = config.pkgs.zsh;
