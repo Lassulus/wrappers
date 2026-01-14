@@ -73,17 +73,17 @@
   config = {
     flagSeparator = "=";
     flags = {
-      "--vim" = lib.mkIf (config.keyMap == "vim");
-      "--emacs" = lib.mkIf (config.keyMap == "emacs");
-      "--histsavenodups" = config.history.saveNoDups;
-      "--histexpiredupsfirst" = config.history.expireDuplicatesFirst;
-      "--histappend" = config.history.append;
-      "--histfindnodups" = config.history.findNoDups;
-      "--histignoredups" = config.history.ignoreDups;
-      "--histignorespace" = config.history.ignoreSpace;
-      "--autocd" = config.autocd;
-      "--autolist" = config.completion.enable;
-      "--automenu" = config.completion.enable;
+      "--vim" = lib.mkIf (config.settings.keyMap == "vim");
+      "--emacs" = lib.mkIf (config.settings.keyMap == "emacs");
+      "--histsavenodups" = config.settings.history.saveNoDups;
+      "--histexpiredupsfirst" = config.settings.history.expireDuplicatesFirst;
+      "--histappend" = config.settings.history.append;
+      "--histfindnodups" = config.settings.history.findNoDups;
+      "--histignoredups" = config.settings.history.ignoreDups;
+      "--histignorespace" = config.settings.history.ignoreSpace;
+      "--autocd" = config.settings.autocd;
+      "--autolist" = config.settings.completion.enable;
+      "--automenu" = config.settings.completion.enable;
     };
 
     package = config.pkgs.zsh;
