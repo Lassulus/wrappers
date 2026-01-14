@@ -120,7 +120,7 @@ in {
       "--automenu" = config.settings.completion.enable;
     };
     env = {
-      Z_DOT_DIR = toString config.".zshrc".path + "..";
+      Z_DOT_DIR = toString config.settings.".zshrc".path + "..";
     };
 
     package = config.pkgs.zsh;
