@@ -75,15 +75,15 @@
     flags = {
       "--vim" = lib.mkIf (config.keyMap == "vim");
       "--emacs" = lib.mkIf (config.keyMap == "emacs");
-      "--histsavenodups" = lib.mkIf config.history.saveNoDups;
-      "--histexpiredupsfirst" = lib.mkIf config.history.expireDuplicatesFirst;
-      "--histappend" = lib.mkIf config.history.append;
-      "--histfindnodups" = lib.mkIf config.history.findNoDups;
-      "--histignoredups" = lib.mkIf config.history.ignoreDups;
-      "--histignorespace" = lib.mkIf config.history.ignoreSpace;
-      "--autocd" = lib.mkIf config.autocd;
-      "--autolist" = lib.mkIf config.completion.enable;
-      "--automenu" = lib.mkIf config.completion.enable;
+      "--histsavenodups" = config.history.saveNoDups;
+      "--histexpiredupsfirst" = config.history.expireDuplicatesFirst;
+      "--histappend" = config.history.append;
+      "--histfindnodups" = config.history.findNoDups;
+      "--histignoredups" = config.history.ignoreDups;
+      "--histignorespace" = config.history.ignoreSpace;
+      "--autocd" = config.autocd;
+      "--autolist" = config.completion.enable;
+      "--automenu" = config.completion.enable;
     };
 
     package = config.pkgs.zsh;
