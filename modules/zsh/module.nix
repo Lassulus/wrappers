@@ -13,11 +13,12 @@ in {
     settings = {
       keyMap = lib.mkOption {
         type = lib.types.enum [
-          "vim"
+          "viins"
           "emacs"
+          "vicmd"
         ];
         description = ''
-          keymap for zsh, pick between emacs and vi mode, defaults to emacs mode ( will add viins and vicmd options eventually).
+          keymap for zsh, pick between emacs vi, and vicmd, defaults to emacs mode.
         '';
         default = "emacs";
       };
@@ -94,8 +95,10 @@ in {
           content = "";
           path = config.pkgs.concatText "zsh-config" [
             (
-              if config.settings.keyMap == "vim"
-              then "bindkey -vi"
+              if config.settings.keyMap == "vicmd"
+              then "bindkey -a"
+              else if config.settings.keyMap == "viins"
+              then "bindkey -v"
               else "bindkey -e"
             )
             (
