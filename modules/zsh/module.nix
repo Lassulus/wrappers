@@ -91,9 +91,10 @@ in {
       ".zshrc" = lib.mkOption {
         type = wlib.types.file config.pkgs;
         default = let
-          aliasLines =
-            lib.mapAttrsToList (k: v: "alias -- ${k}=${v}")
-            cfg.shellAliases;
+          aliasStr = builtins.concatStringsSep "\n" (
+            lib.mapAttrsToList (k: v: "alias -- ${lib.escapeShellArg k}=${lib.escapeShellArg v}")
+            cfg.shellAliases
+          );
         in {
           content = builtins.concatStringsSep "\n" [
             (
@@ -103,7 +104,7 @@ in {
               then "bindkey -v"
               else "bindkey -e"
             )
-            aliasLines
+            aliasStr
           ];
         };
       };
