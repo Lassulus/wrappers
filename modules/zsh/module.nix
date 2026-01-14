@@ -14,6 +14,21 @@
         '';
         default = "emacs";
       };
+      autocd = lib.mkOption {
+        type = lib.types.bool;
+        description = ''
+          lets you navigate to a directory just by typing the name/path. defaults to false;
+        '';
+        default = false;
+      };
+
+      completion.enable = lib.mkOption {
+        type = lib.types.bool;
+        description = ''
+          enable completion.
+        '';
+      };
+
       history = {
         saveNoDups = lib.mkOption {
           type = lib.types.bool;
@@ -46,6 +61,12 @@
           '';
           default = false;
         };
+        ignoreSpace = lib.mkOption {
+          description = ''
+            lets you omit a command from the history if you put a space before it; defaults to true;
+          '';
+          default = true;
+        };
       };
     };
   };
@@ -58,6 +79,11 @@
       "--histexpiredupsfirst" = lib.mkIf config.history.expireDuplicatesFirst;
       "--histappend" = lib.mkIf config.history.append;
       "--histfindnodups" = lib.mkIf config.history.findNoDups;
+      "--histignoredups" = lib.mkIf config.history.ignoreDups;
+      "--histignorespace" = lib.mkIf config.history.ignoreSpace;
+      "--autocd" = lib.mkIf config.autocd;
+      "--autolist" = lib.mkIf config.completion.enable;
+      "--automenu" = lib.mkIf config.completion.enable;
     };
 
     package = config.pkgs.zsh;
