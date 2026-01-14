@@ -4,9 +4,7 @@
   wlib,
   ...
 }: let
-  kvFmt = config.pkgs.formats.keyValue {
-    listsAsDuplicateKeys = true;
-  };
+  cfg = cfg;
 in {
   _class = "wrapper";
   options = {
@@ -95,13 +93,13 @@ in {
         default = let
           aliasLines =
             lib.mapAttrsToList (k: v: "alias -- ${k}=${v}")
-            config.settings.shellAliases;
+            cfg.shellAliases;
         in {
-          content = config.pkgs.concatText "zsh-config" [
+          content = toString config.pkgs.concatText "zsh-config" [
             (
-              if config.settings.keyMap == "vicmd"
+              if cfg.keyMap == "vicmd"
               then "bindkey -a"
-              else if config.settings.keyMap == "viins"
+              else if cfg.keyMap == "viins"
               then "bindkey -v"
               else "bindkey -e"
             )
@@ -114,18 +112,18 @@ in {
   config = {
     flagSeparator = "=";
     flags = {
-      "--histsavenodups" = config.settings.history.saveNoDups;
-      "--histexpiredupsfirst" = config.settings.history.expireDuplicatesFirst;
-      "--histappend" = config.settings.history.append;
-      "--histfindnodups" = config.settings.history.findNoDups;
-      "--histignoredups" = config.settings.history.ignoreDups;
-      "--histignorespace" = config.settings.history.ignoreSpace;
-      "--autocd" = config.settings.autocd;
-      "--autolist" = config.settings.completion.enable;
-      "--automenu" = config.settings.completion.enable;
+      "--histsavenodups" = cfg.history.saveNoDups;
+      "--histexpiredupsfirst" = cfg.history.expireDuplicatesFirst;
+      "--histappend" = cfg.history.append;
+      "--histfindnodups" = cfg.history.findNoDups;
+      "--histignoredups" = cfg.history.ignoreDups;
+      "--histignorespace" = cfg.history.ignoreSpace;
+      "--autocd" = cfg.autocd;
+      "--autolist" = cfg.completion.enable;
+      "--automenu" = cfg.completion.enable;
     };
     env = {
-      Z_DOT_DIR = config.settings.".zshrc".path + "..";
+      Z_DOT_DIR = cfg.".zshrc".path + "..";
     };
 
     package = config.pkgs.zsh;
