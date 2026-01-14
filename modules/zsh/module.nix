@@ -34,8 +34,9 @@ in {
       completion.enable = lib.mkOption {
         type = lib.types.bool;
         description = ''
-          enable completion.
+          enable completion, false by default.
         '';
+        default = false;
       };
 
       shellAliases = lib.mkOption {
