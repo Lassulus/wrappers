@@ -103,12 +103,9 @@ in {
               else "bindkey -e"
             )
 
-            (
-              toString
-              kvFmt.generate
-              "aliases-config"
-              config.settings.shellAliases
-            )
+            kvFmt.generate
+            "aliases-config"
+            config.settings.shellAliases
           ];
         };
       };
@@ -128,7 +125,7 @@ in {
       "--automenu" = config.settings.completion.enable;
     };
     env = {
-      Z_DOT_DIR = toString config.settings.".zshrc".path + "..";
+      Z_DOT_DIR = config.settings.".zshrc".path + "..";
     };
 
     package = config.pkgs.zsh;
