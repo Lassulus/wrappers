@@ -102,9 +102,10 @@ in {
               then "bindkey -v"
               else "bindkey -e"
             )
-            (
-              kvFmt.generate "aliases-config" config.settings.shellAliases
-            )
+
+            kvFmt.generate
+            "aliases-config"
+            config.settings.shellAliases
           ];
         };
       };
