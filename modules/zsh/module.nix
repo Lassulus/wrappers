@@ -97,7 +97,7 @@ in {
             lib.mapAttrsToList (k: v: "alias -- ${k}=${v}")
             config.settings.shellAliases;
         in {
-          path = config.pkgs.concatText "zsh-config" [
+          content = config.pkgs.concatText "zsh-config" [
             (
               if config.settings.keyMap == "vicmd"
               then "bindkey -a"
