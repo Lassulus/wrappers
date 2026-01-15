@@ -96,7 +96,7 @@ in {
             cfg.shellAliases
           );
         in {
-          content = builtins.concatStringsSep "\n" [
+          path = builtins.concatStringsSep "\n" [
             (
               if cfg.keyMap == "vicmd"
               then "bindkey -a"
