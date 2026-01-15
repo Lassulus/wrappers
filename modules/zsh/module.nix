@@ -45,11 +45,9 @@ wlib.wrapModule (
 
     config = let
       RC = config.settings.".zshrc";
-      ENV = config.settings.".zshenv";
 
       zshConfigDir = config.pkgs.linkFarmFromDrvs "zsh-config-directory" [
         RC
-        ENV
       ];
     in {
       package = config.pkgs.zsh;
