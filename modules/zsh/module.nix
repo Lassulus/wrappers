@@ -124,7 +124,7 @@ in {
       "--automenu" = cfg.completion.enable;
     };
     env = {
-      Z_DOT_DIR = builtins.dirOf cfg.".zshrc".path;
+      Z_DOT_DIR = builtins.dirOf cfg."zsh/.zshrc".path;
     };
 
     package = config.pkgs.zsh;
