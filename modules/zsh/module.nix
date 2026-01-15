@@ -16,9 +16,6 @@ in {
       shellAliases = lib.mkOption {
         type = with lib.types; attrsOf str;
         default = {};
-        descritpiton = ''
-          shell Aliases
-        '';
       };
     };
   };
