@@ -5,58 +5,65 @@
 }:
 wlib.wrapModule (
   {config, ...}: let
-    tomlFmt = config.pkgs.formats.toml {};
-  cfg = config.settigs;
+    cfg = config.settings;
   in {
     options = {
       settings = {
-        keymap = lib.mkOption {
+        keyMap = lib.mkOption {
           type = lib.types.enum [
-            "viins"
             "emacs"
             "vicmd"
+            "viins"
           ];
+        };
+        shellAliases = lib.mkOption {
+          type = with lib.types; attrsOf str;
+
           description = ''
-            keymap for zsh, pick between emacs vi, and vicmd, defaults to emacs mode.
+
+            aliases
+
           '';
-          default = "emacs";
+
+          default = {};
         };
       };
-       ".zshrc" = lib.mkOption {
-        type = wlib.types.file config.pkgs;
-        default = let
-          aliasStr = builtins.concatStringsSep "\n" (
-            lib.mapAttrsToList (k: v: "alias -- ${lib.escapeShellArg k}=${lib.escapeShellArg v}")
-            cfg.shellAliases
-          );
-        in {
-          content = builtins.concatStringsSep "\n" [
-            (
-              if cfg.keyMap == "vicmd"
-              then "bindkey -a"
-              else if cfg.keyMap == "viins"
-              then "bindkey -v"
-              else "bindkey -e"
-            )
-            aliasStr
-          ];
-        };
     };
 
     config = let
-      RC = config.settings.".zshrc";
-      keymapToml = tomlFmt.generate "keymap.toml" config.keymap;
-      themeToml = tomlFmt.generate "theme.toml" config.theme;
-
-      yaziConfigDir = config.pkgs.linkFarmFromDrvs "zsh-config-directory" [
+      RC = builtins.concatStringsSep "\n" [
+        # bindkey option
+        (
+          if cfg.keyMap == "vicmd"
+          then "bindkey -a"
+          else if cfg.keyMap == "viins"
+          then "bindkey -v"
+          else "bindkey -e"
+        )
+        # Aliases
+        builtins.concatStringsSep
+        "\n"
+        (
+          lib.mapAttrsToList (k: v: "alias -- ${lib.escapeShellArg k}=${lib.escapeShellArg v}")
+          cfg.shellAliases
+        )
+      ];
+      zshConfigDir = config.pkgs.linkFarmFromDrvs "zsh-config-directory" [
         RC
-        keymapToml
-        themeToml
       ];
     in {
-      flags = config.extraFlags;
       package = config.pkgs.zsh;
-      env.Z_DOT_DIR = "${yaziConfigDir}";
+      env.Z_DOT_DIR = "${zshConfigDir}";
+      meta = {
+        platforms = lib.platforms.linux;
+        maintainers = [
+          {
+            name = "mrid22";
+            github = "mrid22";
+            githubId = 1428207;
+          }
+        ];
+      };
     };
   }
 )
