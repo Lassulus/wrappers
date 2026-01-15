@@ -88,7 +88,7 @@ in {
           default = true;
         };
       };
-      ".zshrc" = lib.mkOption {
+      "zsh/.zshrc" = lib.mkOption {
         type = wlib.types.file config.pkgs;
         default = let
           aliasStr = builtins.concatStringsSep "\n" (
