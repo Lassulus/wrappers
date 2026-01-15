@@ -8,25 +8,23 @@ wlib.wrapModule (
     cfg = config.settings;
   in {
     options = {
-      settings = {
-        keyMap = lib.mkOption {
-          type = lib.types.enum [
-            "emacs"
-            "vicmd"
-            "viins"
-          ];
-        };
-        shellAliases = lib.mkOption {
-          type = with lib.types; attrsOf str;
+      keyMap = lib.mkOption {
+        type = lib.types.enum [
+          "emacs"
+          "vicmd"
+          "viins"
+        ];
+      };
+      shellAliases = lib.mkOption {
+        type = with lib.types; attrsOf str;
 
-          description = ''
+        description = ''
 
-            aliases
+          aliases
 
-          '';
+        '';
 
-          default = {};
-        };
+        default = {};
       };
     };
 
