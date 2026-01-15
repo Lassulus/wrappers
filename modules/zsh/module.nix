@@ -88,7 +88,7 @@ in {
           default = true;
         };
       };
-      "zsh/.zshrc" = lib.mkOption {
+      ".zshrc" = lib.mkOption {
         type = wlib.types.file config.pkgs;
         default = let
           aliasStr = builtins.concatStringsSep "\n" (
@@ -124,7 +124,7 @@ in {
       "--automenu" = cfg.completion.enable;
     };
     env = {
-      Z_DOT_DIR = builtins.dirOf cfg."zsh/.zshrc".path;
+      Z_DOT_DIR = builtins.dirOf cfg.".zshrc".path;
     };
 
     package = config.pkgs.zsh;
