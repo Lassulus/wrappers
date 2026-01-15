@@ -110,7 +110,11 @@ in {
       };
     };
   };
-  config = {
+  config = let
+    zshConfigDir = config.pkgs.linkFarmFromDrvs "zsh-config-directory" [
+      cfg.".zshrc"
+    ];
+  in {
     flagSeparator = "=";
     flags = {
       "--histsavenodups" = cfg.history.saveNoDups;
@@ -124,7 +128,7 @@ in {
       "--automenu" = cfg.completion.enable;
     };
     env = {
-      Z_DOT_DIR = builtins.dirOf cfg.".zshrc".path;
+      Z_DOT_DIR = "${zshConfigDir}";
     };
 
     package = config.pkgs.zsh;
