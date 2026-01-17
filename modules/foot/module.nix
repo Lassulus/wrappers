@@ -5,7 +5,26 @@
   ...
 }:
 let
-  iniFmt = config.pkgs.formats.ini { };
+  iniFmt = config.pkgs.formats.ini {
+    # from https://github.com/NixOS/nixpkgs/blob/89f10dc1a8b59ba63f150a08f8cf67b0f6a2583e/nixos/modules/programs/foot/default.nix#L11-L29
+    listsAsDuplicateKeys = true;
+    mkKeyValue =
+      with lib.generators;
+      mkKeyValueDefault {
+        mkValueString =
+          v:
+          mkValueStringDefault { } (
+            if v == true then
+              "yes"
+            else if v == false then
+              "no"
+            else if v == null then
+              "none"
+            else
+              v
+          );
+      } "=";
+  };
 in
 {
   _class = "wrapper";
