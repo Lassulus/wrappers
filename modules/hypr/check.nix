@@ -5,7 +5,7 @@
 
 let
   hyprWrapped =
-    (self.wrapperModules.hyprland.apply {
+    (self.wrapperModules.hypr.apply {
       inherit pkgs;
 
       "hypr.conf".content = ''
