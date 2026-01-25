@@ -6,11 +6,17 @@
 let
   # Create a simple wrapper module
   helloModule = self.lib.wrapModule (
-    { config, ... }:
+    { config, lib, ... }:
     {
+      options.test = lib.mkOption {
+        type = lib.types.submodule {
+          freeformType = lib.types.attrs;
+        };
+      };
       config.package = config.pkgs.hello;
       config.flags = {
-        "--greeting" = "initial";
+        "--ff" = config.test.freeform;
+        "--greeting" = lib.mkDefault "initial";
       };
     }
   );
@@ -18,21 +24,26 @@ let
   # Apply with initial settings
   initialConfig = helloModule.apply {
     inherit pkgs;
-    flags."--verbose" = { };
+    test.freeform = "freeform1";
+    flags."--verbose" = true;
   };
 
   # Extend the configuration
-  extendedConfig = initialConfig.apply {
-    flags."--greeting" = "extended";
-    flags."--extra" = "flag";
-  };
+  extendedConfig = initialConfig.apply (
+    { lib, ... }:
+    {
+      test.freeform = "freeform2";
+      flags."--greeting" = "extended";
+      flags."--extra" = "flag";
+    }
+  );
 
   # Test mkForce to override a value
   forcedConfig = initialConfig.apply (
     { lib, ... }:
     {
       flags."--greeting" = lib.mkForce "forced";
-      flags."--forced-flag" = { };
+      flags."--forced-flag" = true;
     }
   );
 
@@ -42,15 +53,21 @@ let
   };
 
   # Test chaining apply multiple levels deep
-  doubleApply = extendedConfig.apply {
-    flags."--greeting" = "double";
-    flags."--double" = "level2";
-  };
+  doubleApply = extendedConfig.apply (
+    { lib, ... }:
+    {
+      flags."--greeting" = lib.mkOverride 90 "double";
+      flags."--double" = "level2";
+    }
+  );
 
-  tripleApply = doubleApply.apply {
-    flags."--greeting" = "triple";
-    flags."--triple" = "level3";
-  };
+  tripleApply = doubleApply.apply (
+    { lib, ... }:
+    {
+      flags."--greeting" = lib.mkOverride 80 "triple";
+      flags."--triple" = "level3";
+    }
+  );
 
 in
 pkgs.runCommand "extend-test" { } ''
@@ -77,6 +94,14 @@ pkgs.runCommand "extend-test" { } ''
     exit 1
   fi
 
+  # check if the config has the flag from the freeform attrs
+  if ! grep -q -- "--ff" "$initialScript"; then
+    echo "FAIL: config should have --ff flag"
+    cat "$initialScript"
+    exit 1
+  fi
+
+
   # Check extended config has extended greeting (overriding initial)
   if ! grep -q "extended" "$extendedScript"; then
     echo "FAIL: extended config should have 'extended' greeting"
@@ -94,6 +119,13 @@ pkgs.runCommand "extend-test" { } ''
   # Check extended config has extra flag (from apply)
   if ! grep -q -- "--extra" "$extendedScript"; then
     echo "FAIL: extended config should have --extra flag"
+    cat "$extendedScript"
+    exit 1
+  fi
+
+  # check if the config has the flag from the freeform attrs
+  if ! grep -q -- "freeform2" "$extendedScript"; then
+    echo "FAIL: extended config --ff flag should have the value freeform2"
     cat "$extendedScript"
     exit 1
   fi
@@ -134,8 +166,15 @@ pkgs.runCommand "extend-test" { } ''
   fi
 
   # Check double apply - greeting should be "double" (not "extended")
-  if ! grep -q "double" "$doubleScript"; then
+  if ! grep -q '"double"' "$doubleScript"; then
     echo "FAIL: double apply should have 'double' greeting"
+    cat "$doubleScript"
+    exit 1
+  fi
+
+  # Make sure it's not merged/concatenated with other values
+  if grep -q '"extendeddouble"' "$doubleScript" || grep -q '"doubleextended"' "$doubleScript"; then
+    echo "FAIL: double apply greeting was incorrectly merged with other values"
     cat "$doubleScript"
     exit 1
   fi
@@ -160,8 +199,15 @@ pkgs.runCommand "extend-test" { } ''
   fi
 
   # Check triple apply - greeting should be "triple" (newest wins)
-  if ! grep -q "triple" "$tripleScript"; then
+  if ! grep -q '"triple"' "$tripleScript"; then
     echo "FAIL: triple apply should have 'triple' greeting"
+    cat "$tripleScript"
+    exit 1
+  fi
+
+  # Make sure it's not merged/concatenated with other values
+  if grep -q '"doubletriple"' "$tripleScript" || grep -q '"tripledouble"' "$tripleScript" || grep -q '"extendedtriple"' "$tripleScript"; then
+    echo "FAIL: triple apply greeting was incorrectly merged with other values"
     cat "$tripleScript"
     exit 1
   fi

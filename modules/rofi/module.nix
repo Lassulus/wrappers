@@ -150,7 +150,7 @@ in
     }));
 
   config.flags = {
-    "-config" = config."config.rasi".path;
+    "-config" = toString config."config.rasi".path;
   };
 
   config.package = (

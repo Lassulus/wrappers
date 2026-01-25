@@ -25,7 +25,7 @@ in
   };
   config.flagSeparator = "=";
   config.flags = {
-    "--config" = config."fuzzel.ini".path;
+    "--config" = toString config."fuzzel.ini".path;
   };
   config.package = config.pkgs.fuzzel;
   config.meta.maintainers = [ lib.maintainers.zimward ];

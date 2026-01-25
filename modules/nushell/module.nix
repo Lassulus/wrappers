@@ -19,8 +19,8 @@
 
   config.flagSeparator = "=";
   config.flags = {
-    "--config" = config."config.nu".path;
-    "--env-config" = config."env.nu".path;
+    "--config" = toString config."config.nu".path;
+    "--env-config" = toString config."env.nu".path;
   };
 
   config.package = config.pkgs.nushell;
