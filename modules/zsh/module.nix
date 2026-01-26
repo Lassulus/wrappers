@@ -32,6 +32,19 @@ in
         default = false;
         description = "cd into a directory just by typing it in";
       };
+      integrations = {
+        atuin = {
+          enable = lib.mkEnableOption {
+            type = lib.types.bool;
+            default = false;
+          };
+          package = lib.mkOption {
+            type = lib.types.package;
+            default = config.pkgs.atuin;
+            example = "inputs.self.packages.{pkgs.stdenv.hostPlatform.system}.atuin";
+          };
+        };
+      };
 
       history = {
         append = lib.mkOption {
@@ -113,10 +126,11 @@ in
           else
             "bindkey -e"
         )
-        (lib.concatMapAttrsStringSep "\n" (k: v: ''alias -- ${k}="${v}"'') cfg.shellAliases)
         (if cfg.autocd then "setopt autocd" else "")
+        (lib.concatMapAttrsStringSep "\n" (k: v: ''alias -- ${k}="${v}"'') cfg.shellAliases)
         "HISTSIZE=${toString cfg.history.size}"
         "HISTSAVE=${toString cfg.history.save}"
+        (if cfg.integrations.atuin.enable == true then ''eval "$(atuin init zsh)"'' else "")
         config.extraRC
       ];
     };
@@ -141,6 +155,9 @@ in
       "--histsavenodups" = cfg.history.saveNoDups;
       "--histexpand" = cfg.history.expanded;
     };
+    extraPackages = [
+      (lib.mkIf cfg.integrations.atuin.enable config.pkgs.atuin)
+    ];
     env.ZDOTDIR = builtins.toString (
       config.pkgs.linkFarm "zsh-merged-config" [
         {
