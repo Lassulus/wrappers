@@ -5,7 +5,7 @@
   ...
 }:
 let
-  iniFormat = config.pkgs.formats.iniWithGlobalSection { };
+  iniFormat = config.pkgs.formats.iniWithGlobalSection { listsAsDuplicateKeys = true; };
   iniAtomType = iniFormat.lib.types.atom;
 in
 {
