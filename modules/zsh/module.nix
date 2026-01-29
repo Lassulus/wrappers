@@ -33,6 +33,42 @@ in
         description = "cd into a directory just by typing it in";
       };
 
+      integrations = {
+        fzf = {
+          enable = lib.mkEnableOption "fzf";
+          package = lib.mkOption {
+            type = lib.types.package;
+            default = config.pkgs.fzf;
+          };
+        };
+        atuin = {
+          enable = lib.mkEnableOption "atuin";
+          package = lib.mkOption {
+            type = lib.types.package;
+            default = config.pkgs.atuin;
+          };
+        };
+        oh-my-posh = {
+          enable = lib.mkEnableOption "oh-my-posh";
+          package = lib.mkOption {
+            type = lib.types.package;
+            default = config.pkgs.oh-my-posh;
+          };
+        };
+        zoxide = {
+          enable = lib.mkEnableOption "zoxide";
+          package = lib.mkOption {
+            type = lib.types.package;
+            default = config.pkgs.zoxide;
+          };
+          flags = lib.mkOption {
+            type = with lib.types; listOf str;
+            default = [ ];
+          };
+          description = "adds fzf to zsh without integrating solely so that zoxide can use it for reverse searching, use this if you dont want to integrate fzf with your shell for history, but want it for zoxide";
+        };
+      };
+
       history = {
         append = lib.mkOption {
           type = lib.types.bool;
@@ -102,24 +138,44 @@ in
       description = "extra stuff to put in .zshrc, gets appended *after* all of the options";
     };
 
-    ".zshrc" = lib.mkOption {
-      type = wlib.types.file config.pkgs;
-      default.content = builtins.concatStringsSep "\n" [
-        (
-          if cfg.keyMap == "viins" then
-            "bindkey -a"
-          else if cfg.keyMap == "vicmd" then
-            "bindkey -v"
-          else
-            "bindkey -e"
-        )
-        (lib.concatMapAttrsStringSep "\n" (k: v: ''alias -- ${k}="${v}"'') cfg.shellAliases)
-        (if cfg.autocd then "setopt autocd" else "")
-        "HISTSIZE=${toString cfg.history.size}"
-        "HISTSAVE=${toString cfg.history.save}"
-        config.extraRC
-      ];
-    };
+    ".zshrc" =
+      let
+        zoxide-flags = lib.concatStringsSep " " cfg.integrations.zoxide.flags;
+      in
+      lib.mkOption {
+        type = wlib.types.file config.pkgs;
+        default.content = builtins.concatStringsSep "\n" [
+          "# KeyMap"
+          (
+            if cfg.keyMap == "viins" then
+              "bindkey -a"
+            else if cfg.keyMap == "vicmd" then
+              "bindkey -v"
+            else
+              "bindkey -e"
+          )
+          (if cfg.autocd then "setopt autocd" else "")
+
+          "# Aliases"
+
+          (lib.concatMapAttrsStringSep "\n" (k: v: ''alias -- ${k}="${v}"'') cfg.shellAliases)
+
+          "# integrations"
+          (if cfg.integrations.fzf.enable then "eval $(fzf --zsh)" else "")
+          (if cfg.integrations.atuin.enable then ''eval "$(atuin init zsh)"'' else "")
+          (if cfg.integrations.oh-my-posh.enable then ''eval "$(oh-my-posh init zsh)"'' else "")
+          (if cfg.integrations.zoxide.enable then ''eval "$(zoxide init zsh ${zoxide-flags})"'' else "")
+
+          "# History"
+
+          "HISTSIZE=${toString cfg.history.size}"
+          "HISTSAVE=${toString cfg.history.save}"
+
+          "#Extra Content"
+
+          config.extraRC
+        ];
+      };
 
     ".zshenv" = lib.mkOption {
       type = wlib.types.file config.pkgs;
@@ -130,6 +186,15 @@ in
   };
   config = {
     package = config.pkgs.zsh;
+    extraPackages =
+      let
+        ing = cfg.integrations;
+      in
+      lib.optional ing.fzf.enable ing.fzf.package
+      ++ lib.optional ing.atuin.enable ing.atuin.package
+      ++ lib.optional ing.zoxide.enable ing.zoxide.package
+      ++ lib.optional ing.oh-my-posh.enable ing.oh-my-posh.package;
+
     flags = {
       "--histfcntllock" = true;
       "--histappend" = cfg.history.append;
