@@ -5,7 +5,7 @@
   ...
 }:
 let
-  iniFmt = config.pkgs.formats.ini {
+  iniFmt = config.pkgs.formats.iniWithGlobalSection {
     # from https://github.com/NixOS/nixpkgs/blob/89f10dc1a8b59ba63f150a08f8cf67b0f6a2583e/nixos/modules/programs/foot/default.nix#L11-L29
     listsAsDuplicateKeys = true;
     mkKeyValue =
@@ -40,7 +40,10 @@ in
     "foot.ini" = lib.mkOption {
       type = wlib.types.file config.pkgs;
       description = "foot.init configuration file.";
-      default.path = iniFmt.generate "foot.ini" config.settings;
+      default.path = iniFmt.generate "foot.ini" {
+        globalSection = lib.filterAttrs (name: value: builtins.typeOf value != "set") config.settings;
+        sections = lib.filterAttrs (name: value: builtins.typeOf value == "set") config.settings;
+      };
     };
   };
   config.flags = {
