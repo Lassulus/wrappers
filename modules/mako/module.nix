@@ -13,7 +13,10 @@ in
   options = {
     configFile = lib.mkOption {
       type = wlib.types.file config.pkgs;
-      default.path = iniFormat.generate "mako-settings" { globalSection = config.settings; };
+      default.path = iniFormat.generate "mako-settings" {
+        globalSection = lib.filterAttrs (name: value: builtins.typeOf value != "set") config.settings;
+        sections = lib.filterAttrs (name: value: builtins.typeOf value == "set") config.settings;
+      };
     };
 
     settings = lib.mkOption {
