@@ -69,6 +69,36 @@ in
         };
       };
 
+      completion = {
+        enable = lib.mkEnableOption "completions";
+        init = lib.mkOption {
+          default = "autoload -U compinit && compinit";
+          description = "Initialization commands to run when completion is enabled.";
+          type = lib.types.lines;
+        };
+      };
+
+      autoSuggestions = {
+        enable = lib.mkEnableOption "autoSuggestions";
+        highlight = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          example = "fg=#ff00ff,bg=cyan,bold,underline";
+          description = "Custom styles for autosuggestion highlighting";
+        };
+
+        strategy = lib.mkOption {
+          type = lib.types.listOf (
+            lib.types.enum [
+              "history"
+              "completion"
+              "match_prev_cmd"
+            ]
+          );
+          default = [ "history" ];
+        };
+      };
+
       history = {
         append = lib.mkOption {
           type = lib.types.bool;
@@ -132,6 +162,7 @@ in
         description = "environment variables to put in .zshenv as an attribute set of strings just like environment.systemVariables";
       };
     };
+
     extraRC = lib.mkOption {
       type = lib.types.lines;
       default = "";
@@ -141,6 +172,7 @@ in
     ".zshrc" =
       let
         zoxide-flags = lib.concatStringsSep " " cfg.integrations.zoxide.flags;
+        ing = cfg.integrations;
       in
       lib.mkOption {
         type = wlib.types.file config.pkgs;
@@ -154,24 +186,39 @@ in
             else
               "bindkey -e"
           )
-          (if cfg.autocd then "setopt autocd" else "")
+          (lib.optionalString cfg.autocd "setopt autocd")
 
           "# Aliases"
 
           (lib.concatMapAttrsStringSep "\n" (k: v: ''alias -- ${k}="${v}"'') cfg.shellAliases)
 
-          "# integrations"
-          (if cfg.integrations.fzf.enable then "eval $(fzf --zsh)" else "")
-          (if cfg.integrations.atuin.enable then ''eval "$(atuin init zsh)"'' else "")
-          (if cfg.integrations.oh-my-posh.enable then ''eval "$(oh-my-posh init zsh)"'' else "")
-          (if cfg.integrations.zoxide.enable then ''eval "$(zoxide init zsh ${zoxide-flags})"'' else "")
+          "# Completion"
+          (lib.optionalString cfg.completion.enable cfg.completion.init)
+
+          "#Autosuggestions"
+          (lib.optionalString cfg.autoSuggestions.enable ''
+            source ${config.pkgs.zsh-autosuggestions}/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+              ${lib.optionalString (cfg.autoSuggestions.strategy != [ ]) ''
+                ZSH_AUTOSUGGEST_STRATEGY=(${lib.concatStringsSep " " cfg.autoSuggestions.strategy})
+              ''}
+
+            ${lib.optionalString (cfg.autoSuggestions.highlight != null) ''
+              ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE=(${cfg.autoSuggestions.highlight})
+            ''}
+          '')
+
+          "# Integrations"
+          (lib.optionalString ing.fzf.enable "eval $(fzf --zsh)")
+          (lib.optionalString ing.atuin.enable ''eval "$(atuin init zsh)"'')
+          (lib.optionalString ing.oh-my-posh.enable ''eval "$(oh-my-posh init zsh)"'')
+          (lib.optionalString ing.zoxide.enable ''eval "$(zoxide init zsh ${zoxide-flags})"'')
 
           "# History"
 
           "HISTSIZE=${toString cfg.history.size}"
           "HISTSAVE=${toString cfg.history.save}"
 
-          "#Extra Content"
+          "# Extra Content"
 
           config.extraRC
         ];
@@ -184,6 +231,7 @@ in
       ];
     };
   };
+
   config = {
     package = config.pkgs.zsh;
     extraPackages =
@@ -193,7 +241,8 @@ in
       lib.optional ing.fzf.enable ing.fzf.package
       ++ lib.optional ing.atuin.enable ing.atuin.package
       ++ lib.optional ing.zoxide.enable ing.zoxide.package
-      ++ lib.optional ing.oh-my-posh.enable ing.oh-my-posh.package;
+      ++ lib.optional ing.oh-my-posh.enable ing.oh-my-posh.package
+      ++ lib.optional cfg.completion.enable config.pkgs.nix-zsh-completions;
 
     flags = {
       "--histfcntllock" = true;
@@ -206,6 +255,7 @@ in
       "--histsavenodups" = cfg.history.saveNoDups;
       "--histexpand" = cfg.history.expanded;
     };
+
     env.ZDOTDIR = builtins.toString (
       config.pkgs.linkFarm "zsh-merged-config" [
         {
