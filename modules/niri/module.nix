@@ -15,7 +15,7 @@ let
         if v != "" then
           ''
             ${n.name or n} ${
-              # attrs must be qouted
+              # attrs must be quoted
               let
                 attr = n._attrs or "";
               in
@@ -25,7 +25,7 @@ let
             }''
         else
           "";
-      # surround strings with qoutes
+      # surround strings with quotes
       toVal =
         v:
         if lib.isString v then
