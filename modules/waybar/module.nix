@@ -11,7 +11,7 @@ in
   _class = "wrapper";
   options = {
     settings = lib.mkOption {
-      type = jsonFmt.type;
+      inherit (jsonFmt) type;
       default = { };
       description = ''
         Waybar configuration settings.
@@ -27,6 +27,11 @@ in
           "sway/workspaces"
         ];
       };
+    };
+    style = lib.mkOption {
+      type = lib.types.lines;
+      default = '''';
+      description = "css multi-line string";
     };
     configFile = lib.mkOption {
       type = wlib.types.file config.pkgs;
@@ -49,25 +54,27 @@ in
     };
     "style.css" = lib.mkOption {
       type = wlib.types.file config.pkgs;
-      default.content = "";
+      default.content = config.style;
       description = "CSS style for Waybar.";
     };
   };
 
-  config.package = lib.mkDefault config.pkgs.waybar;
-  config.flags = {
-    "--config" = toString config.configFile.path;
-    "--style" = toString config."style.css".path;
+  config = {
+    package = lib.mkDefault config.pkgs.waybar;
+    flags = {
+      "--config" = toString config.configFile.path;
+      "--style" = toString config."style.css".path;
+    };
+    filesToPatch = [
+      "share/systemd/user/waybar.service"
+    ];
+    meta.maintainers = [
+      {
+        name = "turbio";
+        github = "turbio";
+        githubId = 1428207;
+      }
+    ];
+    meta.platforms = lib.platforms.linux;
   };
-  config.filesToPatch = [
-    "share/systemd/user/waybar.service"
-  ];
-  config.meta.maintainers = [
-    {
-      name = "turbio";
-      github = "turbio";
-      githubId = 1428207;
-    }
-  ];
-  config.meta.platforms = lib.platforms.linux;
 }
