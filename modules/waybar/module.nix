@@ -3,14 +3,16 @@
   wlib,
   lib,
   ...
-}: let
-  jsonFmt = config.pkgs.formats.json {};
-in {
+}:
+let
+  jsonFmt = config.pkgs.formats.json { };
+in
+{
   _class = "wrapper";
   options = {
     settings = lib.mkOption {
       inherit (jsonFmt) type;
-      default = {};
+      default = { };
       description = ''
         Waybar configuration settings.
         See <https://github.com/Alexays/Waybar/wiki/Configuration>
@@ -19,7 +21,7 @@ in {
         position = "top";
         height = 30;
         layer = "top";
-        modules-center = [];
+        modules-center = [ ];
         modules-left = [
           "niri/workspaces"
           "sway/workspaces"
