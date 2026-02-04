@@ -54,7 +54,7 @@ in
     };
     "style.css" = lib.mkOption {
       type = wlib.types.file config.pkgs;
-      default.path = config.style;
+      default.content = config.style;
       description = "CSS style for Waybar.";
     };
   };
