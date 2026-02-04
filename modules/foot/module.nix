@@ -30,7 +30,12 @@ in
   _class = "wrapper";
   options = {
     settings = lib.mkOption {
-      type = lib.types.attrsOf iniFmt.lib.types.atom;
+      type = lib.types.attrsOf (
+        lib.types.oneOf [
+          iniFmt.lib.types.atom
+          (lib.types.attrsOf iniFmt.lib.types.atom)
+        ]
+      );
       default = { };
       description = ''
         Configuration of foot terminal.
