@@ -54,17 +54,25 @@ in
       '';
     };
   };
-  config.flagSeparator = "=";
-  config.flags = {
-    "--config-file" = toString config.configFile.path;
+  config = {
+    filesToPatch = [
+      "share/dbus-1/services/com.mitchellh.ghostty.service"
+      "share/systemd/user/app-com.mitchellh.ghostty.service"
+    ];
+    flagSeparator = "=";
+    flags = {
+      "--config-file" = toString config.configFile.path;
+    };
+    package = config.pkgs.ghostty;
+    meta = {
+      platforms = lib.platforms.linux;
+      maintainers = [
+        {
+          name = "turbio";
+          github = "turbio";
+          githubId = 1428207;
+        }
+      ];
+    };
   };
-  config.package = config.pkgs.ghostty;
-  config.meta.platforms = lib.platforms.linux;
-  config.meta.maintainers = [
-    {
-      name = "turbio";
-      github = "turbio";
-      githubId = 1428207;
-    }
-  ];
 }
