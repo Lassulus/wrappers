@@ -51,10 +51,15 @@ in
       };
     };
   };
-  config.flags = {
-    "--config" = toString config."foot.ini".path;
+  config = {
+    filesToPatch = [ "share/systemd/user/foot-server.service" ];
+    flags = {
+      "--config" = toString config."foot.ini".path;
+    };
+    package = config.pkgs.foot;
+    meta = {
+      maintainers = [ lib.maintainers.randomdude ];
+      platforms = lib.platforms.linux;
+    };
   };
-  config.package = config.pkgs.foot;
-  config.meta.maintainers = [ lib.maintainers.randomdude ];
-  config.meta.platforms = lib.platforms.linux;
 }
