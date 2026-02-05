@@ -34,20 +34,25 @@ in
       '';
     };
   };
-
-  config.flagSeparator = "=";
-  config.flags = {
-    "--config" = toString config.configFile.path;
+  config = {
+    flagSeparator = "=";
+    flags = {
+      "--config" = toString config.configFile.path;
+    };
+    package = config.pkgs.mako;
+    filesToPatch = [
+      "share/dbus-1/services/fr.emersion.mako.service"
+      "share/systemd/user/mako.service"
+    ];
+    meta = {
+      maintainers = [
+        {
+          name = "altacountbabi";
+          github = "altacountbabi";
+          githubId = 82091823;
+        }
+      ];
+      platforms = lib.platforms.linux;
+    };
   };
-
-  config.package = config.pkgs.mako;
-
-  config.meta.maintainers = [
-    {
-      name = "altacountbabi";
-      github = "altacountbabi";
-      githubId = 82091823;
-    }
-  ];
-  config.meta.platforms = lib.platforms.linux;
 }
