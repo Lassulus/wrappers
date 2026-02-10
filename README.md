@@ -40,7 +40,7 @@ This library provides two main components:
           vo=gpu
           hwdec=auto
         '';
-        "mpv.input".content = ''
+        "input.conf".content = ''
           WHEEL_UP seek 10
           WHEEL_DOWN seek -10
         '';
@@ -231,7 +231,7 @@ Wraps mpv with configuration file support and script management:
     vo=gpu
     profile=gpu-hq
   '';
-  "mpv.input".content = ''
+  "input.conf".content = ''
     RIGHT seek 5
     LEFT seek -5
   '';
