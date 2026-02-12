@@ -12,19 +12,25 @@ let
       leftpad = v: lib.strings.concatMapStrings (v: "  ${v}\n") (lib.strings.splitString "\n" v);
       mkBlock =
         n: v:
-        if v != "" then
-          ''
-            ${n.name or n} ${
-              # attrs must be quoted
-              let
-                attr = n._attrs or "";
-              in
-              if attr != "" then ''"${attr}"'' else ""
-            } {
+        let
+          attrs = if builtins.isAttrs n then (n._attrs or "") else "";
+          formattedAttrs =
+            if builtins.isAttrs attrs then
+              lib.concatMapAttrsStringSep " " (k: v: "${k}=${toVal v}") attrs
+            else if attrs != "" then
+              # string attrs must be quoted
+              ''"${attrs}"''
+            else
+              "";
+          body = lib.optionalString (v != "") ''
+            {
             ${leftpad v}
-            }''
-        else
-          "";
+            }
+          '';
+        in
+        ''
+          ${n.name or n} ${formattedAttrs} ${body}
+        '';
       # surround strings with quotes
       toVal =
         v:
@@ -128,7 +134,12 @@ in
             type = lib.types.attrs;
             description = "Bindings of niri";
             example = {
-              "Mod+T".spawn-sh = "alacritty";
+              "Mod+T" = {
+                spawn-sh = "alacritty";
+                _attrs = {
+                  repeat = false;
+                };
+              };
               "Mod+J".focus-column-or-monitor-left = null;
               "Mod+N".spawn = [
                 "alacritty"
@@ -211,6 +222,12 @@ in
             example = {
               "DP-3" = {
                 background-color = "#003300";
+                position = {
+                  _attrs = {
+                    x = 0;
+                    y = 0;
+                  };
+                };
                 hot-corners = {
                   off = null;
                 };
