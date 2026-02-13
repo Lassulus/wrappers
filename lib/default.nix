@@ -467,8 +467,7 @@ let
       ),
     }@funcArgs:
     let
-      # lndir was moved from xorg.lndir to lndir in https://github.com/NixOS/nixpkgs/pull/402102
-      lndir = if pkgs ? xorg.lndir then pkgs.xorg.lndir else pkgs.lndir;
+      inherit (pkgs) lndir;
 
       # Generate environment variable exports
       envString =
