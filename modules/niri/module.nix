@@ -65,14 +65,12 @@ let
           else
             mkKeyVal n v
         ) a;
-      mkTagged =
-        t: k: v:
-        "${t} ${k}=${toVal v}";
+      mkTagged = tag: attrs: "${tag} ${lib.concatMapAttrsStringSep " " (k: v: "${k}=${toVal v}") attrs}";
       mkRule =
         block: r:
         let
-          matches = map (lib.concatMapAttrsStringSep "\n" (mkTagged "match")) r.matches or [ ];
-          excludes = map (lib.concatMapAttrsStringSep "\n" (mkTagged "exclude")) r.excludes or [ ];
+          matches = map (mkTagged "match") r.matches or [ ];
+          excludes = map (mkTagged "exclude") r.excludes or [ ];
           misc = attrsToKdl (
             lib.attrsets.removeAttrs r [
               "matches"
