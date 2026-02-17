@@ -308,6 +308,17 @@ in
     "share/applications/*.desktop"
     "share/systemd/user/niri.service"
   ];
+  config.patchHook = ''
+    chmod +w $out/share/systemd/user/niri.service
+    cat >> $out/share/systemd/user/niri.service<<EOF
+    [Unit]
+    X-Reload-Triggers=${config."config.kdl".path}
+    [Service]
+    ExecReload=$out/bin/niri msg action load-config-file --path ${config."config.kdl".path}
+    X-ReloadIfChanged=true
+    EOF
+  '';
+
   config.package = config.pkgs.niri;
   config.env = {
     NIRI_CONFIG = toString config."config.kdl".path;
