@@ -146,7 +146,7 @@ Arguments:
   - Example: `["bin/*", "lib/*.sh"]` to replace original package paths with wrapped package paths
   - Desktop files are patched by default to update Exec= and Icon= paths
 - `filesToExclude`: List of file paths (glob patterns) to exclude from the wrapped package (default: `[]`)
-- `patchHook`: Shell script that runs after patchPhase to modify the wrapper package files
+- `patchHook`: Shell script that runs after patchPhase to modify the wrapper package files (default: `""`)
 - `wrapper`: Custom wrapper function (optional, overrides default exec wrapper)
 
 The function:
@@ -171,9 +171,11 @@ Built-in options (always available):
 - `flagSeparator`: Separator between flag name and value (default: `" "`)
 - `args`: Command-line arguments list (auto-generated from `flags` if not provided)
 - `env`: Environment variables
+- `preHook`: Shell script executed before the command (default: `""`)
 - `passthru`: Additional passthru attributes
 - `filesToPatch`: List of file paths (glob patterns) to patch for self-references (default: `["share/applications/*.desktop"]`)
 - `filesToExclude`: List of file paths (glob patterns) to exclude from the wrapped package (default: `[]`)
+- `patchHook`: Shell script that runs after patchPhase to modify the wrapper package files (default `""`)
 - `wrapper`: The resulting wrapped package (read-only, auto-generated from other options)
 - `apply`: Function to extend the configuration with additional modules (read-only)
 

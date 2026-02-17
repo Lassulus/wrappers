@@ -384,7 +384,7 @@ let
     - `aliases`: List of additional names to symlink to the wrapped executable (optional)
     - `filesToPatch`: List of file paths (glob patterns) to patch for self-references (optional, defaults to ["share/applications/*.desktop"])
     - `filesToExclude`: List of file paths (glob patterns) to exclude from the wrapped package (optional, defaults to [])
-    - `patchHook`: Shell script that runs after patchPhase to modify the wrapper package files
+    - `patchHook`: Shell script that runs after patchPhase to modify the wrapper package files (optional)
     - `wrapper`: Custom wrapper function (optional, defaults to exec'ing the original binary with args)
       - Called with { env, flags, args, envString, flagsString, exePath, preHook }
 

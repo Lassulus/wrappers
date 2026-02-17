@@ -85,6 +85,20 @@
       Example: [ "bin/unwanted-tool" "share/applications/*.desktop" ]
     '';
   };
+  options.patchHook = lib.mkOption {
+    type = lib.types.str;
+    default = "";
+    description = ''
+      Shell script that runs after patchPhase to modify the wrapper package files.
+    '';
+  };
+  options.preHook = lib.mkOption {
+    type = lib.types.str;
+    default = "";
+    description = ''
+      Shell script to run before executing the command.
+    '';
+  };
   options.exePath = lib.mkOption {
     type = lib.types.path;
     description = ''
@@ -123,6 +137,8 @@
       env = config.env;
       filesToPatch = config.filesToPatch;
       filesToExclude = config.filesToExclude;
+      preHook = config.preHook;
+      patchHook = config.patchHook;
       passthru = {
         configuration = config;
       }
