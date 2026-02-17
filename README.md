@@ -146,6 +146,7 @@ Arguments:
   - Example: `["bin/*", "lib/*.sh"]` to replace original package paths with wrapped package paths
   - Desktop files are patched by default to update Exec= and Icon= paths
 - `filesToExclude`: List of file paths (glob patterns) to exclude from the wrapped package (default: `[]`)
+- `patchHook`: Shell script that runs after patchPhase to modify the wrapper package files
 - `wrapper`: Custom wrapper function (optional, overrides default exec wrapper)
 
 The function:

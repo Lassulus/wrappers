@@ -384,6 +384,7 @@ let
     - `aliases`: List of additional names to symlink to the wrapped executable (optional)
     - `filesToPatch`: List of file paths (glob patterns) to patch for self-references (optional, defaults to ["share/applications/*.desktop"])
     - `filesToExclude`: List of file paths (glob patterns) to exclude from the wrapped package (optional, defaults to [])
+    - `patchHook`: Shell script that runs after patchPhase to modify the wrapper package files
     - `wrapper`: Custom wrapper function (optional, defaults to exec'ing the original binary with args)
       - Called with { env, flags, args, envString, flagsString, exePath, preHook }
 
@@ -451,6 +452,7 @@ let
       filesToPatch ? [ "share/applications/*.desktop" ],
       # List of file paths (glob patterns) to exclude from the wrapped package (e.g., ["bin/unwanted-*", "share/doc/*"])
       filesToExclude ? [ ],
+      patchHook ? "",
       wrapper ? (
         {
           exePath,
@@ -511,6 +513,7 @@ let
           binName ? null,
           filesToPatch ? [ ],
           filesToExclude ? [ ],
+          patchHook ? "",
           ...
         }@args:
         pkgs.stdenv.mkDerivation (
@@ -566,6 +569,7 @@ let
                   done
                 '') filesToPatch}
               ''}
+              ${patchHook}
 
               # Create symlinks for aliases
               ${lib.optionalString (aliases != [ ] && binName != null) ''
@@ -604,6 +608,7 @@ let
             "binName"
             "filesToPatch"
             "filesToExclude"
+            "patchHook"
           ])
         );
 
@@ -638,6 +643,7 @@ let
             binName
             filesToPatch
             filesToExclude
+            patchHook
             ;
           passthru =
             (package.passthru or { })
