@@ -55,6 +55,13 @@ in
             default = config.pkgs.oh-my-posh;
           };
         };
+        starship = {
+          enable = lib.mkEnableOption "starship";
+          package = lib.mkOption {
+            type = lib.types.package;
+            default = config.pkgs.starship; # Or self'.packages.starship, assuming you use flake parts
+          };
+        };
         zoxide = {
           enable = lib.mkEnableOption "zoxide";
           package = lib.mkOption {
@@ -65,7 +72,6 @@ in
             type = with lib.types; listOf str;
             default = [ ];
           };
-          description = "adds fzf to zsh without integrating solely so that zoxide can use it for reverse searching, use this if you dont want to integrate fzf with your shell for history, but want it for zoxide";
         };
       };
 
@@ -212,6 +218,7 @@ in
           (lib.optionalString ing.atuin.enable ''eval "$(atuin init zsh)"'')
           (lib.optionalString ing.oh-my-posh.enable ''eval "$(oh-my-posh init zsh)"'')
           (lib.optionalString ing.zoxide.enable ''eval "$(zoxide init zsh ${zoxide-flags})"'')
+          (lib.optionalString ing.starship.enable ''eval $(starship init zsh)'')
 
           "# History"
 
@@ -242,6 +249,7 @@ in
       ++ lib.optional ing.atuin.enable ing.atuin.package
       ++ lib.optional ing.zoxide.enable ing.zoxide.package
       ++ lib.optional ing.oh-my-posh.enable ing.oh-my-posh.package
+      ++ lib.optional ing.starship.enable ing.starship.package
       ++ lib.optional cfg.completion.enable config.pkgs.nix-zsh-completions;
 
     flags = {
