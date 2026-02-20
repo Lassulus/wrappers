@@ -208,7 +208,7 @@ in
           '')
 
           "# Integrations"
-          (lib.optionalString ing.fzf.enable "eval $(fzf --zsh)")
+          (lib.optionalString ing.fzf.enable "source <(fzf --zsh)")
           (lib.optionalString ing.atuin.enable ''eval "$(atuin init zsh)"'')
           (lib.optionalString ing.oh-my-posh.enable ''eval "$(oh-my-posh init zsh)"'')
           (lib.optionalString ing.zoxide.enable ''eval "$(zoxide init zsh ${zoxide-flags})"'')
