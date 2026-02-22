@@ -218,7 +218,7 @@ in
           (lib.optionalString ing.atuin.enable ''eval "$(atuin init zsh)"'')
           (lib.optionalString ing.oh-my-posh.enable ''eval "$(oh-my-posh init zsh)"'')
           (lib.optionalString ing.zoxide.enable ''eval "$(zoxide init zsh ${zoxide-flags})"'')
-          (lib.optionalString ing.starship.enable ''eval $(starship init zsh)'')
+          (lib.optionalString ing.starship.enable ''eval "$(starship init zsh)"'')
 
           "# History"
 
