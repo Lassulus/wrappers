@@ -140,6 +140,7 @@ Arguments:
   - Example: `[ "--silent" "--connect-timeout" "30" ]`
   - If provided, overrides automatic generation from `flags`
 - `preHook`: Shell script executed before the command (default: `""`)
+- `postHook`: Shell script executed after the command. This will leave a bash process running, use with caution (default: `""`)
 - `passthru`: Additional attributes for the derivation's passthru (default: `{}`)
 - `aliases`: List of additional symlink names for the executable (default: `[]`)
 - `filesToPatch`: List of file paths (glob patterns) relative to package root to patch for self-references (default: `["share/applications/*.desktop"]`)
@@ -172,6 +173,7 @@ Built-in options (always available):
 - `args`: Command-line arguments list (auto-generated from `flags` if not provided)
 - `env`: Environment variables
 - `preHook`: Shell script executed before the command (default: `""`)
+- `postHook`: Shell script executed after the command. This will leave a bash process running, use with caution (default: `""`)
 - `passthru`: Additional passthru attributes
 - `filesToPatch`: List of file paths (glob patterns) to patch for self-references (default: `["share/applications/*.desktop"]`)
 - `filesToExclude`: List of file paths (glob patterns) to exclude from the wrapped package (default: `[]`)
