@@ -3,9 +3,11 @@
   lib,
   wlib,
   ...
-}: let
+}:
+let
   cfg = config.settings;
-in {
+in
+{
   _class = "wrapper";
   options = {
     settings = {
@@ -21,7 +23,7 @@ in {
 
       shellAliases = lib.mkOption {
         type = with lib.types; attrsOf str;
-        default = {};
+        default = { };
         description = "shell aliases (alias -- key=value)";
       };
 
@@ -40,30 +42,30 @@ in {
           };
           light = lib.mkOption {
             type = with lib.types; listOf str;
-            default = [];
+            default = [ ];
           };
           load = lib.mkOption {
             type = with lib.types; listOf str;
-            default = [];
+            default = [ ];
           };
           oh-my-zsh = {
             plugins = lib.mkOption {
               type = with lib.types; listOf str;
-              default = [];
+              default = [ ];
             };
             themes = lib.mkOption {
               type = with lib.types; listOf str;
-              default = [];
+              default = [ ];
             };
             libs = lib.mkOption {
               type = with lib.types; listOf str;
-              default = [];
+              default = [ ];
             };
           };
           prezto = {
             plugins = lib.mkOption {
               type = with lib.types; listOf str;
-              default = [];
+              default = [ ];
             };
           };
         };
@@ -106,7 +108,7 @@ in {
           };
           flags = lib.mkOption {
             type = with lib.types; listOf str;
-            default = [];
+            default = [ ];
           };
         };
       };
@@ -137,7 +139,7 @@ in {
               "match_prev_cmd"
             ]
           );
-          default = ["history"];
+          default = [ "history" ];
         };
       };
 
@@ -211,20 +213,22 @@ in {
       description = "extra stuff to put in .zshrc, gets appended *after* all of the options";
     };
 
-    ".zshrc" = let
-      zoxide-flags = lib.concatStringsSep " " cfg.integrations.zoxide.flags;
-      ing = cfg.integrations;
-    in
+    ".zshrc" =
+      let
+        zoxide-flags = lib.concatStringsSep " " cfg.integrations.zoxide.flags;
+        ing = cfg.integrations;
+      in
       lib.mkOption {
         type = wlib.types.file config.pkgs;
         default.content = builtins.concatStringsSep "\n" [
           "# KeyMap"
           (
-            if cfg.keyMap == "viins"
-            then "bindkey -a"
-            else if cfg.keyMap == "vicmd"
-            then "bindkey -v"
-            else "bindkey -e"
+            if cfg.keyMap == "viins" then
+              "bindkey -a"
+            else if cfg.keyMap == "vicmd" then
+              "bindkey -v"
+            else
+              "bindkey -e"
           )
           (lib.optionalString cfg.autocd "setopt autocd")
 
@@ -238,9 +242,9 @@ in {
           "#Autosuggestions"
           (lib.optionalString cfg.autoSuggestions.enable ''
             source ${config.pkgs.zsh-autosuggestions}/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-              ${lib.optionalString (cfg.autoSuggestions.strategy != []) ''
-              ZSH_AUTOSUGGEST_STRATEGY=(${lib.concatStringsSep " " cfg.autoSuggestions.strategy})
-            ''}
+              ${lib.optionalString (cfg.autoSuggestions.strategy != [ ]) ''
+                ZSH_AUTOSUGGEST_STRATEGY=(${lib.concatStringsSep " " cfg.autoSuggestions.strategy})
+              ''}
 
             ${lib.optionalString (cfg.autoSuggestions.highlight != null) ''
               ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE=(${cfg.autoSuggestions.highlight})
@@ -283,9 +287,10 @@ in {
 
   config = {
     package = config.pkgs.zsh;
-    extraPackages = let
-      ing = cfg.integrations;
-    in
+    extraPackages =
+      let
+        ing = cfg.integrations;
+      in
       lib.optional ing.fzf.enable ing.fzf.package
       ++ lib.optional ing.atuin.enable ing.atuin.package
       ++ lib.optional ing.zoxide.enable ing.zoxide.package
