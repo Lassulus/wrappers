@@ -9,7 +9,12 @@ let
       inherit pkgs;
       settings = {
         binds = {
-          "Mod+T".spawn-sh = "alacritty";
+          "Mod+T" = {
+            spawn-sh = "alacritty";
+            _attrs = {
+              repeat = false;
+            };
+          };
           "Mod+J".focus-column-or-monitor-left = null;
           "Mod+N".spawn = [
             "alacritty"
@@ -70,6 +75,14 @@ let
         };
 
         outputs = {
+          "DP-4" = {
+            position = {
+              _attrs = {
+                x = 1440;
+                y = 1080;
+              };
+            };
+          };
           "DP-3" = {
             position = {
               x = 1440;

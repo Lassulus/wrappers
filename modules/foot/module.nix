@@ -5,7 +5,7 @@
   ...
 }:
 let
-  iniFmt = config.pkgs.formats.ini {
+  iniFmt = config.pkgs.formats.iniWithGlobalSection {
     # from https://github.com/NixOS/nixpkgs/blob/89f10dc1a8b59ba63f150a08f8cf67b0f6a2583e/nixos/modules/programs/foot/default.nix#L11-L29
     listsAsDuplicateKeys = true;
     mkKeyValue =
@@ -30,7 +30,12 @@ in
   _class = "wrapper";
   options = {
     settings = lib.mkOption {
-      inherit (iniFmt) type;
+      type = lib.types.attrsOf (
+        lib.types.oneOf [
+          iniFmt.lib.types.atom
+          (lib.types.attrsOf iniFmt.lib.types.atom)
+        ]
+      );
       default = { };
       description = ''
         Configuration of foot terminal.
@@ -40,13 +45,21 @@ in
     "foot.ini" = lib.mkOption {
       type = wlib.types.file config.pkgs;
       description = "foot.init configuration file.";
-      default.path = iniFmt.generate "foot.ini" config.settings;
+      default.path = iniFmt.generate "foot.ini" {
+        globalSection = lib.filterAttrs (name: value: builtins.typeOf value != "set") config.settings;
+        sections = lib.filterAttrs (name: value: builtins.typeOf value == "set") config.settings;
+      };
     };
   };
-  config.flags = {
-    "--config" = toString config."foot.ini".path;
+  config = {
+    filesToPatch = [ "share/systemd/user/foot-server.service" ];
+    flags = {
+      "--config" = toString config."foot.ini".path;
+    };
+    package = config.pkgs.foot;
+    meta = {
+      maintainers = [ lib.maintainers.randomdude ];
+      platforms = lib.platforms.linux;
+    };
   };
-  config.package = config.pkgs.foot;
-  config.meta.maintainers = [ lib.maintainers.randomdude ];
-  config.meta.platforms = lib.platforms.linux;
 }

@@ -40,7 +40,7 @@ This library provides two main components:
           vo=gpu
           hwdec=auto
         '';
-        "mpv.input".content = ''
+        "input.conf".content = ''
           WHEEL_UP seek 10
           WHEEL_DOWN seek -10
         '';
@@ -140,12 +140,14 @@ Arguments:
   - Example: `[ "--silent" "--connect-timeout" "30" ]`
   - If provided, overrides automatic generation from `flags`
 - `preHook`: Shell script executed before the command (default: `""`)
+- `postHook`: Shell script executed after the command. This will leave a bash process running, use with caution (default: `""`)
 - `passthru`: Additional attributes for the derivation's passthru (default: `{}`)
 - `aliases`: List of additional symlink names for the executable (default: `[]`)
 - `filesToPatch`: List of file paths (glob patterns) relative to package root to patch for self-references (default: `["share/applications/*.desktop"]`)
   - Example: `["bin/*", "lib/*.sh"]` to replace original package paths with wrapped package paths
   - Desktop files are patched by default to update Exec= and Icon= paths
 - `filesToExclude`: List of file paths (glob patterns) to exclude from the wrapped package (default: `[]`)
+- `patchHook`: Shell script that runs after patchPhase to modify the wrapper package files (default: `""`)
 - `wrapper`: Custom wrapper function (optional, overrides default exec wrapper)
 
 The function:
@@ -170,9 +172,12 @@ Built-in options (always available):
 - `flagSeparator`: Separator between flag name and value (default: `" "`)
 - `args`: Command-line arguments list (auto-generated from `flags` if not provided)
 - `env`: Environment variables
+- `preHook`: Shell script executed before the command (default: `""`)
+- `postHook`: Shell script executed after the command. This will leave a bash process running, use with caution (default: `""`)
 - `passthru`: Additional passthru attributes
 - `filesToPatch`: List of file paths (glob patterns) to patch for self-references (default: `["share/applications/*.desktop"]`)
 - `filesToExclude`: List of file paths (glob patterns) to exclude from the wrapped package (default: `[]`)
+- `patchHook`: Shell script that runs after patchPhase to modify the wrapper package files (default `""`)
 - `wrapper`: The resulting wrapped package (read-only, auto-generated from other options)
 - `apply`: Function to extend the configuration with additional modules (read-only)
 
@@ -231,7 +236,7 @@ Wraps mpv with configuration file support and script management:
     vo=gpu
     profile=gpu-hq
   '';
-  "mpv.input".content = ''
+  "input.conf".content = ''
     RIGHT seek 5
     LEFT seek -5
   '';

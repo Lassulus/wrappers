@@ -380,12 +380,14 @@ let
     - `flagSeparator`: Separator between flag names and values when generating args from flags (optional, defaults to " ")
     - `args`: List of command-line arguments like argv in execve (optional, auto-generated from flags if not provided)
     - `preHook`: Shell script to run before executing the command (optional)
+    - `postHook`: Shell script to run after executing the command, removes the `exec` call. use with care (optional)
     - `passthru`: Attribute set to pass through to the wrapped derivation (optional)
     - `aliases`: List of additional names to symlink to the wrapped executable (optional)
     - `filesToPatch`: List of file paths (glob patterns) to patch for self-references (optional, defaults to ["share/applications/*.desktop"])
     - `filesToExclude`: List of file paths (glob patterns) to exclude from the wrapped package (optional, defaults to [])
+    - `patchHook`: Shell script that runs after patchPhase to modify the wrapper package files (optional)
     - `wrapper`: Custom wrapper function (optional, defaults to exec'ing the original binary with args)
-      - Called with { env, flags, args, envString, flagsString, exePath, preHook }
+      - Called with { env, flags, args, envString, flagsString, exePath, preHook, postHook }
 
     # Example
 
@@ -445,30 +447,33 @@ let
       # " " for "--flag value" or "=" for "--flag=value"
       args ? generateArgsFromFlags flags flagSeparator,
       preHook ? "",
+      postHook ? "",
       passthru ? { },
       aliases ? [ ],
       # List of file paths (glob patterns) relative to package root to patch for self-references (e.g., ["bin/*", "lib/*.sh"])
       filesToPatch ? [ "share/applications/*.desktop" ],
       # List of file paths (glob patterns) to exclude from the wrapped package (e.g., ["bin/unwanted-*", "share/doc/*"])
       filesToExclude ? [ ],
+      patchHook ? "",
       wrapper ? (
         {
           exePath,
           flagsString,
           envString,
           preHook,
+          postHook,
           ...
         }:
         ''
           ${envString}
           ${preHook}
-          exec ${exePath}${flagsString} "$@"
+          ${lib.optionalString (postHook == "") "exec"} ${exePath}${flagsString} "$@"
+          ${postHook}
         ''
       ),
     }@funcArgs:
     let
-      # lndir was moved from xorg.lndir to lndir in https://github.com/NixOS/nixpkgs/pull/402102
-      lndir = if pkgs ? xorg.lndir then pkgs.xorg.lndir else pkgs.lndir;
+      inherit (pkgs) lndir;
 
       # Generate environment variable exports
       envString =
@@ -496,6 +501,7 @@ let
           flagsString
           exePath
           preHook
+          postHook
           ;
       };
 
@@ -512,6 +518,7 @@ let
           binName ? null,
           filesToPatch ? [ ],
           filesToExclude ? [ ],
+          patchHook ? "",
           ...
         }@args:
         pkgs.stdenv.mkDerivation (
@@ -567,6 +574,7 @@ let
                   done
                 '') filesToPatch}
               ''}
+              ${patchHook}
 
               # Create symlinks for aliases
               ${lib.optionalString (aliases != [ ] && binName != null) ''
@@ -605,6 +613,7 @@ let
             "binName"
             "filesToPatch"
             "filesToExclude"
+            "patchHook"
           ])
         );
 
@@ -639,6 +648,7 @@ let
             binName
             filesToPatch
             filesToExclude
+            patchHook
             ;
           passthru =
             (package.passthru or { })
@@ -649,6 +659,7 @@ let
                 flags
                 args
                 preHook
+                postHook
                 aliases
                 ;
               override =

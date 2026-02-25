@@ -5,7 +5,7 @@
   ...
 }:
 let
-  iniFormat = config.pkgs.formats.iniWithGlobalSection { };
+  iniFormat = config.pkgs.formats.iniWithGlobalSection { listsAsDuplicateKeys = true; };
   iniAtomType = iniFormat.lib.types.atom;
 in
 {
@@ -13,7 +13,10 @@ in
   options = {
     configFile = lib.mkOption {
       type = wlib.types.file config.pkgs;
-      default.path = iniFormat.generate "mako-settings" { globalSection = config.settings; };
+      default.path = iniFormat.generate "mako-settings" {
+        globalSection = lib.filterAttrs (name: value: builtins.typeOf value != "set") config.settings;
+        sections = lib.filterAttrs (name: value: builtins.typeOf value == "set") config.settings;
+      };
     };
 
     settings = lib.mkOption {
@@ -31,20 +34,25 @@ in
       '';
     };
   };
-
-  config.flagSeparator = "=";
-  config.flags = {
-    "--config" = toString config.configFile.path;
+  config = {
+    flagSeparator = "=";
+    flags = {
+      "--config" = toString config.configFile.path;
+    };
+    package = config.pkgs.mako;
+    filesToPatch = [
+      "share/dbus-1/services/fr.emersion.mako.service"
+      "share/systemd/user/mako.service"
+    ];
+    meta = {
+      maintainers = [
+        {
+          name = "altacountbabi";
+          github = "altacountbabi";
+          githubId = 82091823;
+        }
+      ];
+      platforms = lib.platforms.linux;
+    };
   };
-
-  config.package = config.pkgs.mako;
-
-  config.meta.maintainers = [
-    {
-      name = "altacountbabi";
-      github = "altacountbabi";
-      githubId = 82091823;
-    }
-  ];
-  config.meta.platforms = lib.platforms.linux;
 }
