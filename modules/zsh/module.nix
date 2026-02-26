@@ -82,6 +82,22 @@ in
           description = "Initialization commands to run when completion is enabled.";
           type = lib.types.lines;
         };
+        extraCompletions = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "enable to add zsh-completions package, it has extra completions for other tools";
+        };
+        colors = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "make the completions colorful (as if you were using ls --color)";
+        };
+        caseInsensitive = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "when enabled, makes the completion case insensitive.";
+        };
+        fuzzySearch = lib.mkEnableOption "fuzzy-completion";
       };
 
       autoSuggestions = {
@@ -200,6 +216,8 @@ in
 
           "# Completion"
           (lib.optionalString cfg.completion.enable cfg.completion.init)
+          (lib.optionalString cfg.completion.caseInsensitive "zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}' ")
+          (lib.optionalString cfg.completion.colors "zstyle ':completion:*' list-colors \"$\{(s.:.)LS_COLORS\}\" ")
 
           "#Autosuggestions"
           (lib.optionalString cfg.autoSuggestions.enable ''
@@ -250,7 +268,9 @@ in
       ++ lib.optional ing.zoxide.enable ing.zoxide.package
       ++ lib.optional ing.oh-my-posh.enable ing.oh-my-posh.package
       ++ lib.optional ing.starship.enable ing.starship.package
-      ++ lib.optional cfg.completion.enable config.pkgs.nix-zsh-completions;
+      ++ lib.optional cfg.completion.enable config.pkgs.nix-zsh-completions
+      ++ lib.optional cfg.completion.extraCompletions config.pkgs.zsh-completions
+      ++ lib.optional cfg.completion.fuzzySearch config.pkgs.zsh-fzf-tab;
 
     flags = {
       "--histfcntllock" = true;
