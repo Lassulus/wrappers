@@ -117,7 +117,10 @@ in
               "match_prev_cmd"
             ]
           );
-          default = [ "history" ];
+          default = [
+            "history"
+            "completion"
+          ];
         };
       };
 
@@ -131,6 +134,11 @@ in
           type = lib.types.bool;
           default = false;
           description = "save timestamps with history";
+        };
+        share = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "share history between sessions";
         };
         save = lib.mkOption {
           type = lib.types.int;
@@ -243,6 +251,15 @@ in
           "HISTSIZE=${toString cfg.history.size}"
           "HISTSAVE=${toString cfg.history.save}"
 
+          (lib.optionalString cfg.history.append "setopt appendhistory")
+          (lib.optionalString cfg.history.share "setopt sharehistory")
+          (lib.optionalString cfg.history.ignoreSpace "setopt hist_ignore_space")
+          (lib.optionalString cfg.history.ignoreAllDups "setopt hist_ignore_all_dups")
+          (lib.optionalString cfg.history.ignoreDups "setopt hist_ignore_dups")
+          (lib.optionalString cfg.history.saveNoDups "setopt hist_save_no_dups")
+          (lib.optionalString cfg.history.findNoDups "setopt histfindnodups")
+          (lib.optionalString cfg.history.expanded "setopt extendedhistory")
+
           "# Extra Content"
 
           config.extraRC
@@ -274,14 +291,7 @@ in
 
     flags = {
       "--histfcntllock" = true;
-      "--histappend" = cfg.history.append;
       "--histexpiredupsfirst" = cfg.history.expireDupsFirst;
-      "--histfindnodups" = cfg.history.findNoDups;
-      "--histignorealldups" = cfg.history.ignoreAllDups;
-      "--histignoredups" = cfg.history.ignoreDups;
-      "--histignorespace" = cfg.history.ignoreSpace;
-      "--histsavenodups" = cfg.history.saveNoDups;
-      "--histexpand" = cfg.history.expanded;
     };
 
     env.ZDOTDIR = builtins.toString (
