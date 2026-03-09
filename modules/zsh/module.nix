@@ -92,11 +92,7 @@ in
           default = false;
           description = "make the completions colorful (as if you were using ls --color)";
         };
-        caseInsensitive = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "when enabled, makes the completion case insensitive.";
-        };
+        caseInsensitive = lib.mkEnableOption "completions";
         fuzzySearch = lib.mkEnableOption "fuzzy-completion";
       };
 
@@ -226,6 +222,10 @@ in
           (lib.optionalString cfg.completion.enable cfg.completion.init)
           (lib.optionalString cfg.completion.caseInsensitive "zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}' ")
           (lib.optionalString cfg.completion.colors "zstyle ':completion:*' list-colors \"$\{(s.:.)LS_COLORS\}\" ")
+          (lib.optionalString cfg.completion.fuzzySearch ''
+            zstyle ':completion:*' menu no
+            source ${config.pkgs.zsh-fzf-tab}/share/fzf-tab/fzf-tab.plugin.zsh
+          '')
 
           "#Autosuggestions"
           (lib.optionalString cfg.autoSuggestions.enable ''
