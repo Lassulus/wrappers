@@ -13,6 +13,10 @@ let
           hdon = "hyprctl dispatch dpms on";
           ls = "eza --icons";
         };
+        completion = {
+          enable = true;
+          caseInsensitive = true;
+        };
         env = {
           NH_OS_FLAKE = "~/nixos-config";
         };
