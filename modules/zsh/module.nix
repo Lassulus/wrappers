@@ -62,6 +62,17 @@ in
             default = config.pkgs.starship; # Or self'.packages.starship, assuming you use flake parts
           };
         };
+        pay-respects = {
+          enable = lib.mkEnableOption "pay-respects";
+          package = lib.mkOption {
+            type = lib.types.package;
+            default = config.pkgs.pay-respects;
+          };
+          flags = lib.mkOption {
+            type = with lib.types; listOf str;
+            default = [ ];
+          };
+        };
         zoxide = {
           enable = lib.mkEnableOption "zoxide";
           package = lib.mkOption {
@@ -202,6 +213,7 @@ in
     ".zshrc" =
       let
         zoxide-flags = lib.concatStringsSep " " cfg.integrations.zoxide.flags;
+        pay-respects-flags = lib.concatStringsSep " " cfg.integrations.pay-respects.flags;
         ing = cfg.integrations;
       in
       lib.mkOption {
@@ -244,6 +256,7 @@ in
           (lib.optionalString ing.atuin.enable ''eval "$(atuin init zsh)"'')
           (lib.optionalString ing.oh-my-posh.enable ''eval "$(oh-my-posh init zsh)"'')
           (lib.optionalString ing.zoxide.enable ''eval "$(zoxide init zsh ${zoxide-flags})"'')
+          (lib.optionalString ing.pay-respects.enable ''eval "$(pay-respects zsh ${pay-respects-flags})"'')
           (lib.optionalString ing.starship.enable ''eval "$(starship init zsh)"'')
 
           "# History"
@@ -285,6 +298,7 @@ in
       ++ lib.optional ing.zoxide.enable ing.zoxide.package
       ++ lib.optional ing.oh-my-posh.enable ing.oh-my-posh.package
       ++ lib.optional ing.starship.enable ing.starship.package
+      ++ lib.optional ing.pay-respects.enable ing.pay-respects.package
       ++ lib.optional cfg.completion.enable config.pkgs.nix-zsh-completions
       ++ lib.optional cfg.completion.extraCompletions config.pkgs.zsh-completions
       ++ lib.optional cfg.completion.fuzzySearch config.pkgs.zsh-fzf-tab;
