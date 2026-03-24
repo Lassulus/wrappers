@@ -5,6 +5,8 @@
     { self, nixpkgs }:
     let
       forAllSystems = f: nixpkgs.lib.genAttrs nixpkgs.lib.platforms.all (system: f system);
+      # non-exhaustive list of systems nixpkgs has support for
+      defaultSystems = f: nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (system: f system);
     in
     {
       lib = import ./lib { lib = nixpkgs.lib; };
@@ -57,6 +59,46 @@
           );
         in
         checksFromDir // checksFromModules
+      );
+      # mdbook documentation for all modules
+      packages = defaultSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          lib = nixpkgs.lib;
+        in
+        {
+          mdbook = (
+            pkgs.stdenvNoCC.mkDerivation {
+              name = "wrappers-mdbook";
+              nativeBuildInputs = with pkgs; [
+                mdbook
+              ];
+              srcs = lib.mapAttrsToList (_: v: ((v.apply { inherit pkgs; }).docs.commonMark)) self.wrapperModules;
+              names = lib.mapAttrsToList (name: _: name) self.wrapperModules;
+              dontUnpack = true;
+              dontPatch = true;
+              buildPhase = ''
+                # echo "[book]" >> book.toml
+                # echo "title = \"wrappers\"" >> book.toml
+                mdbook init wrappers
+                cd wrappers/src
+                echo "# Summary" > SUMMARY.md
+                names=($names)
+                srcs=($srcs)
+                for i in "''${!names[@]}"; do
+                  cp ''${srcs[$i]} ''${names[$i]}.md
+
+                  echo "- ["''${names[$i]}"](''${names[$i]}.md)" >> SUMMARY.md
+                done
+                cat SUMMARY.md
+                mkdir -p $out
+                cd ..
+                mdbook build --dest-dir $out
+              '';
+            }
+          );
+        }
       );
     };
 }
