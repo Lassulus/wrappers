@@ -181,6 +181,9 @@ Built-in options (always available):
 - `wrapper`: The resulting wrapped package (read-only, auto-generated from other options)
 - `apply`: Function to extend the configuration with additional modules (read-only)
 
+Optional modules (import via `wlib.modules.<name>`):
+- `systemd`: Generates systemd service files (user and/or system), options are passed through from NixOS
+
 Custom types:
 - `wlib.types.file`: File type with `content` and `path` options
   - `content`: File contents as string
@@ -264,6 +267,105 @@ Wraps notmuch with INI-based configuration:
     };
   };
 }).wrapper
+```
+
+### Generating systemd Services
+
+Import `wlib.modules.systemd` to generate systemd service files for your wrapper.
+The options under `systemd` are the same as `systemd.services.<name>` in NixOS,
+passed through directly.
+
+`ExecStart` (including args), `Environment`, `PATH`, `preStart` and `postStop`
+are picked up from the wrapper automatically, so you only need to set what's
+specific to the service.
+
+The same config produces both a user and system service file, available at
+`config.outputs.systemd-user` and `config.outputs.systemd-system`. Use
+whichever fits your deployment.
+
+```nix
+wlib.wrapModule ({ config, wlib, ... }: {
+  imports = [ wlib.modules.systemd ];
+
+  config = {
+    package = config.pkgs.hello;
+    flags."--greeting" = "world";
+    env.HELLO_LANG = "en";
+    systemd = {
+      description = "Hello service";
+      serviceConfig.Type = "simple";
+      serviceConfig.Restart = "on-failure";
+    };
+  };
+})
+```
+
+Settings merge when using `apply`:
+
+```nix
+extended = myWrapper.apply {
+  systemd.serviceConfig.Restart = "always";
+  systemd.environment.EXTRA = "value";
+};
+```
+
+#### Using in NixOS
+
+You need both `systemd.packages` for the unit file and the corresponding
+`wantedBy` to actually activate it. NixOS does not read the `[Install]` section
+from unit files, it creates the `.wants` symlinks from the module option instead.
+
+As a user service (for all users):
+
+```nix
+# configuration.nix
+{ pkgs, wrappers, ... }:
+let
+  myHello = wrappers.wrapperModules.hello.apply {
+    inherit pkgs;
+    systemd.serviceConfig.Restart = "always";
+  };
+in {
+  systemd.packages = [ myHello.outputs.systemd-user ];
+  # NixOS needs this to create the .wants symlink, the [Install]
+  # section in the unit file alone is not enough
+  systemd.user.services.hello.wantedBy = [ "default.target" ];
+}
+```
+
+As a system service:
+
+```nix
+# configuration.nix
+{ pkgs, wrappers, ... }:
+let
+  myHello = wrappers.wrapperModules.hello.apply {
+    inherit pkgs;
+    systemd.serviceConfig.Restart = "always";
+  };
+in {
+  systemd.packages = [ myHello.outputs.systemd-system ];
+  systemd.services.hello.wantedBy = [ "multi-user.target" ];
+}
+```
+
+#### Using in home-manager
+
+For per-user services, link via `xdg.dataFile`:
+
+```nix
+# home.nix
+{ pkgs, wrappers, ... }:
+let
+  myHello = wrappers.wrapperModules.hello.apply {
+    inherit pkgs;
+    systemd.wantedBy = [ "default.target" ];
+    systemd.serviceConfig.Restart = "always";
+  };
+in {
+  xdg.dataFile."systemd/user/hello.service".source =
+    "${myHello.outputs.systemd-user}/systemd/user/hello.service";
+}
 ```
 
 ## alternatives

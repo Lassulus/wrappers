@@ -249,7 +249,9 @@ let
       inherit modules class specialArgs;
     };
 
-  modules = lib.genAttrs [ "package" "wrapper" "meta" ] (name: import ./modules/${name}.nix);
+  modules = lib.genAttrs [ "package" "wrapper" "meta" "systemd" ] (
+    name: import ./modules/${name}.nix
+  );
 
   /**
     Create a wrapper configuration using the NixOS module system.
