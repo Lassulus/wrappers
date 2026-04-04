@@ -249,7 +249,7 @@ let
       inherit modules class specialArgs;
     };
 
-  modules = lib.genAttrs [ "package" "wrapper" "meta" "systemd" ] (
+  modules = lib.genAttrs [ "package" "command" "wrapper" "meta" "systemd" ] (
     name: import ./modules/${name}.nix
   );
 
