@@ -13,7 +13,6 @@ let
       "--empty" = [ ];
       "--output" = "file.txt";
     };
-    flagSeparator = " ";
   };
 
 in

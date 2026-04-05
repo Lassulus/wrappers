@@ -15,7 +15,6 @@ let
       ];
       "--verbose" = true;
     };
-    flagSeparator = " ";
   };
 
   wrappedWithEqualsSep = self.lib.wrapPackage {

@@ -56,11 +56,12 @@ in
   };
 
   options.flagSeparator = lib.mkOption {
-    type = lib.types.str;
-    default = " ";
+    type = lib.types.nullOr lib.types.str;
+    default = null;
     description = ''
       Separator between flag names and values when generating args from flags.
-      " " for "--flag value" or "=" for "--flag=value"
+      null (default) for separate argv entries: "--flag" "value"
+      "=" for joined: "--flag=value"
     '';
   };
 
