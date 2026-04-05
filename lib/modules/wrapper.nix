@@ -31,6 +31,13 @@
       Shell script that runs after patchPhase to modify the wrapper package files.
     '';
   };
+
+  # Inject "$@" (passthrough of user arguments) into args at order 1001,
+  # so it comes just after the default flag order (1000).
+  # Use mkOrder on args to position it; other flags can use order > 1001
+  # to appear after "$@" if needed.
+  config.args = lib.mkOrder 1001 [ "$@" ];
+
   options.outputs.wrapper = lib.mkOption {
     type = lib.types.package;
     readOnly = true;
@@ -58,6 +65,22 @@
         configuration = config;
       }
       // config.passthru;
+      # Custom wrapper function: "$@" is already in args, so don't add it again
+      wrapper =
+        {
+          exePath,
+          flagsString,
+          envString,
+          preHook,
+          postHook,
+          ...
+        }:
+        ''
+          ${envString}
+          ${preHook}
+          ${lib.optionalString (postHook == "") "exec"} ${exePath}${flagsString}
+          ${postHook}
+        '';
     };
   };
   options.wrapper = lib.mkOption {
