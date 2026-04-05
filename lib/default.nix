@@ -451,7 +451,7 @@ let
       flags ? { },
       flagSeparator ? null,
       # null for "--flag" "value" (separate args) or "=" for "--flag=value"
-      args ? generateArgsFromFlags flags flagSeparator,
+      args ? generateArgsFromFlags flags flagSeparator ++ [ "$@" ],
       preHook ? "",
       postHook ? "",
       passthru ? { },
@@ -473,7 +473,7 @@ let
         ''
           ${envString}
           ${preHook}
-          ${lib.optionalString (postHook == "") "exec"} ${exePath}${flagsString} "$@"
+          ${lib.optionalString (postHook == "") "exec"} ${exePath}${flagsString}
           ${postHook}
         ''
       ),

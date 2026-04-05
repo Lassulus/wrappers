@@ -65,22 +65,6 @@
         configuration = config;
       }
       // config.passthru;
-      # Custom wrapper function: "$@" is already in args, so don't add it again
-      wrapper =
-        {
-          exePath,
-          flagsString,
-          envString,
-          preHook,
-          postHook,
-          ...
-        }:
-        ''
-          ${envString}
-          ${preHook}
-          ${lib.optionalString (postHook == "") "exec"} ${exePath}${flagsString}
-          ${postHook}
-        '';
     };
   };
   options.wrapper = lib.mkOption {
