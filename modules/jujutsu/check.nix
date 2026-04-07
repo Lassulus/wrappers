@@ -16,7 +16,8 @@ let
     }).wrapper;
 in
 pkgs.runCommand "jujutsu-test" { } ''
-  "${jujutsuWrapped}/bin/jj" config list --user | grep -q 'user.name = "Test User"'
-  "${jujutsuWrapped}/bin/jj" config list --user | grep -q 'user.email = "test@example.com"'
+  config_list="$(${jujutsuWrapped}/bin/jj config list --user)"
+  [[ "$config_list" == *'user.name = "Test User"'* ]]
+  [[ "$config_list" == *'user.email = "test@example.com"'* ]]
   touch $out
 ''

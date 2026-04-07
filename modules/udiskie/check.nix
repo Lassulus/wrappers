@@ -16,6 +16,6 @@ let
     }).wrapper;
 in
 pkgs.runCommand "udiskie-test" { } ''
-  "${udiskieWrapped}/bin/udiskie" --version | grep -q "udiskie"
+  [[ "$(${udiskieWrapped}/bin/udiskie --version)" == *udiskie* ]]
   touch $out
 ''

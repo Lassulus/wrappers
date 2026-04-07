@@ -24,7 +24,7 @@ pkgs.runCommand "i3-test" { nativeBuildInputs = [ pkgs.dbus ]; } ''
   dbus-daemon --session --address="$DBUS_SESSION_BUS_ADDRESS" --nofork --nopidfile --print-address &
   DBUS_PID=$!
 
-  "${i3Wrapped}/bin/i3" --version | grep -q "${i3Wrapped.version}"
+  [[ "$(${i3Wrapped}/bin/i3 --version)" == *"${i3Wrapped.version}"* ]]
 
   kill $DBUS_PID 2>/dev/null || true
 
