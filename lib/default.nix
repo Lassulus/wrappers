@@ -2,14 +2,18 @@
 let
   /**
     flagToArgs {
-      flagSeparator: str,
+      flagSeparator: null | str,
       name: str,
       flag: bool | str | [ str | [ str ] ]
-    } -> [ str
+    } -> [ str ]
+
+    flagSeparator = null  -> ["--flag" "value"]  (separate argv entries, default)
+    flagSeparator = "="   -> ["--flag=value"]     (joined with separator)
+    flagSeparator = " "   -> ["--flag value"]     (joined with space, single arg)
   */
   flagToArgs =
     {
-      flagSeparator ? " ",
+      flagSeparator ? null,
       name,
       flag,
     }:
@@ -18,7 +22,7 @@ let
     else if flag == true then
       [ name ]
     else if builtins.isString flag then
-      if flagSeparator == " " then
+      if flagSeparator == null then
         [
           name
           flag
@@ -30,7 +34,7 @@ let
       lib.concatMap (
         v:
         if builtins.isString v then
-          if flagSeparator == " " then
+          if flagSeparator == null then
             [
               name
               v
@@ -249,7 +253,7 @@ let
       inherit modules class specialArgs;
     };
 
-  modules = lib.genAttrs [ "package" "wrapper" "meta" "systemd" ] (
+  modules = lib.genAttrs [ "package" "flags" "command" "wrapper" "meta" "systemd" ] (
     name: import ./modules/${name}.nix
   );
 
@@ -379,7 +383,7 @@ let
     - `runtimeInputs`: List of packages to add to PATH (optional)
     - `env`: Attribute set of environment variables to export (optional)
     - `flags`: Attribute set of command-line flags to add (optional)
-    - `flagSeparator`: Separator between flag names and values when generating args from flags (optional, defaults to " ")
+    - `flagSeparator`: Separator between flag names and values when generating args from flags (optional, defaults to null for separate argv entries, use "=" for joined)
     - `args`: List of command-line arguments like argv in execve (optional, auto-generated from flags if not provided)
     - `preHook`: Shell script to run before executing the command (optional)
     - `postHook`: Shell script to run after executing the command, removes the `exec` call. use with care (optional)
@@ -445,9 +449,9 @@ let
       runtimeInputs ? [ ],
       env ? { },
       flags ? { },
-      flagSeparator ? " ",
-      # " " for "--flag value" or "=" for "--flag=value"
-      args ? generateArgsFromFlags flags flagSeparator,
+      flagSeparator ? null,
+      # null for "--flag" "value" (separate args) or "=" for "--flag=value"
+      args ? generateArgsFromFlags flags flagSeparator ++ [ "$@" ],
       preHook ? "",
       postHook ? "",
       passthru ? { },
@@ -469,7 +473,7 @@ let
         ''
           ${envString}
           ${preHook}
-          ${lib.optionalString (postHook == "") "exec"} ${exePath}${flagsString} "$@"
+          ${lib.optionalString (postHook == "") "exec"} ${exePath}${flagsString}
           ${postHook}
         ''
       ),

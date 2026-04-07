@@ -111,7 +111,7 @@ let
 in
 pkgs.runCommand "niri-test" { } ''
   cat ${niriWrapped}/bin/niri
-  "${niriWrapped}/bin/niri" --version | grep -q "${niriWrapped.version}"
+  [[ "$(${niriWrapped}/bin/niri --version)" == *"${niriWrapped.version}"* ]]
   "${niriWrapped}/bin/niri" validate
   # since config is now checked at build time, testing a bad config is impossible
   touch $out

@@ -31,7 +31,7 @@ let
 in
 pkgs.runCommand "ghostty" { } ''
   "${ghosttyWrapped}/bin/ghostty" +validate-config
-  "${ghosttyWrapped}/bin/ghostty" +version | grep -q "${ghosttyWrapped.version}"
+  [[ "$(${ghosttyWrapped}/bin/ghostty +version)" == *"${ghosttyWrapped.version}"* ]]
 
   "${ghosttyFileWrapped}/bin/ghostty" +validate-config
 
