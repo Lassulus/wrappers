@@ -1,8 +1,8 @@
 {
   pkgs ? import <nixpkgs> { },
+  lib ? pkgs.lib,
 }:
 let
-  lib = pkgs.lib;
   wlib = import ./lib { inherit lib; };
 in
 {
