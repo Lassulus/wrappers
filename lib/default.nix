@@ -124,6 +124,190 @@ let
     ''"${escaped}"'';
 
   /**
+    Mark an entry inside an `env.<VAR>.values` / `prefix` / `suffix`
+    list as a reference to another environment variable, expanded at
+    runtime by the wrapper rather than treated as a literal string.
+
+    # Arguments
+
+    - `name`: the name of the environment variable to reference.
+
+    # Example
+
+    ```nix
+    env.LD_LIBRARY_PATH.values = [
+      "/opt/lib"
+      (wlib.envRef "LD_LIBRARY_PATH")
+      "/other/lib"
+    ];
+    ```
+
+    Empty/unset references drop out at runtime, so there are no
+    stray separators if the referenced variable isn't set.
+  */
+  envRef = name: {
+    _type = "envRef";
+    inherit name;
+    default = "";
+  };
+
+  /**
+    Normalise an `env` attribute set (as accepted by `wrapPackage` or
+    the `env` module option) into the canonical per-entry form with
+    all fields populated. Accepts:
+
+    - a plain string (becomes `{ value = <str>; }`)
+    - `null` (becomes `{ unset = true; }`)
+    - a partial attrset with any subset of the structured options
+  */
+  normaliseEnvEntry =
+    entry:
+    let
+      defaults = {
+        value = null;
+        values = [ ];
+        prefix = [ ];
+        suffix = [ ];
+        separator = ":";
+        fallback = false;
+        unset = false;
+      };
+      raw =
+        if entry == null then
+          { unset = true; }
+        else if builtins.isString entry then
+          { value = entry; }
+        else if builtins.isAttrs entry then
+          entry
+        else
+          throw "wrappers: unsupported env entry of type ${builtins.typeOf entry}";
+    in
+    defaults // raw;
+
+  /**
+    Render an `env` attribute set into a shell snippet that sets the
+    corresponding environment variables when sourced/evaluated. Used
+    internally by `wrapPackage` but exposed so downstream callers can
+    render env snippets themselves (e.g. for testing or composition).
+
+    Returns the empty string when there is nothing to emit.
+  */
+  renderEnvString =
+    env:
+    let
+      shellEscape =
+        s:
+        let
+          escaped = lib.replaceStrings [ ''\'' ''"'' ] [ ''\\'' ''\"'' ] (toString s);
+        in
+        ''"${escaped}"'';
+
+      renderPart =
+        part:
+        if builtins.isString part then
+          shellEscape part
+        else if (part._type or null) == "envRef" then
+          let
+            defaultEscaped = lib.replaceStrings [ ''\'' ''"'' ] [ ''\\'' ''\"'' ] (
+              part.default or ""
+            );
+          in
+          ''"''${${part.name}-${defaultEscaped}}"''
+        else
+          throw "wrappers: invalid env value part: ${lib.generators.toPretty { } part}";
+
+      effectiveParts =
+        name: entry:
+        let
+          middle =
+            if entry.values != [ ] then
+              (lib.optional (entry.value != null) entry.value) ++ entry.values
+            else if entry.value != null then
+              [ entry.value ]
+            else if entry.prefix != [ ] || entry.suffix != [ ] then
+              [
+                {
+                  _type = "envRef";
+                  inherit name;
+                  default = "";
+                }
+              ]
+            else
+              [ ];
+        in
+        entry.prefix ++ middle ++ entry.suffix;
+
+      entries = lib.mapAttrs (_: normaliseEnvEntry) env;
+
+      rendered = lib.mapAttrsToList (
+        name: entry:
+        if entry.unset then
+          {
+            needsJoin = false;
+            body = "unset ${name}";
+          }
+        else
+          let
+            parts = effectiveParts name entry;
+            isTrivialLiteral =
+              lib.length parts == 1
+              && builtins.isString (lib.head parts)
+              && entry.values == [ ]
+              && entry.prefix == [ ]
+              && entry.suffix == [ ];
+            body =
+              if parts == [ ] then
+                null
+              else if isTrivialLiteral then
+                "export ${name}=${shellEscape (lib.head parts)}"
+              else
+                let
+                  renderedParts = map renderPart parts;
+                  sepArg = shellEscape entry.separator;
+                in
+                "export ${name}=\"$(_wrapper_env_join ${sepArg} ${lib.concatStringsSep " " renderedParts})\"";
+            wrapped =
+              if body == null then
+                null
+              else if entry.fallback then
+                ''
+                  if [ -z "''${${name}+set}" ]; then
+                    ${body}
+                  fi''
+              else
+                body;
+          in
+          {
+            needsJoin = !isTrivialLiteral && body != null;
+            body = wrapped;
+          }
+      ) entries;
+
+      nonEmpty = lib.filter (r: r.body != null) rendered;
+      needsJoin = lib.any (r: r.needsJoin) nonEmpty;
+
+      joinHelper = ''
+        _wrapper_env_join() {
+          local _sep="$1"
+          shift
+          local _out=""
+          local _p
+          for _p in "$@"; do
+            [ -n "$_p" ] || continue
+            _out="''${_out:+$_out$_sep}$_p"
+          done
+          printf '%s' "$_out"
+        }'';
+    in
+    if nonEmpty == [ ] then
+      ""
+    else
+      lib.concatStringsSep "\n" (
+        (lib.optional needsJoin joinHelper) ++ (map (r: r.body) nonEmpty)
+      )
+      + "\n";
+
+  /**
     A collection of types for wrapper modules.
     For now this only contains a file type.
   */
@@ -253,7 +437,7 @@ let
       inherit modules class specialArgs;
     };
 
-  modules = lib.genAttrs [ "package" "flags" "command" "wrapper" "meta" "systemd" ] (
+  modules = lib.genAttrs [ "package" "flags" "env" "command" "wrapper" "meta" "systemd" ] (
     name: import ./modules/${name}.nix
   );
 
@@ -482,14 +666,7 @@ let
       inherit (pkgs) lndir;
 
       # Generate environment variable exports
-      envString =
-        if env == { } then
-          ""
-        else
-          lib.concatStringsSep "\n" (
-            lib.mapAttrsToList (name: value: ''export ${name}="${toString value}"'') env
-          )
-          + "\n";
+      envString = wrapperLib.renderEnvString env;
 
       # Generate flag arguments with proper line breaks and indentation
       flagsString =
@@ -698,6 +875,9 @@ let
       escapeShellArgWithEnv
       generateArgsFromFlags
       flagToArgs
+      envRef
+      renderEnvString
+      normaliseEnvEntry
       ;
   };
 in
