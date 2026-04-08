@@ -124,188 +124,123 @@ let
     ''"${escaped}"'';
 
   /**
-    Mark an entry inside an `env.<VAR>.values` / `prefix` / `suffix`
-    list as a reference to another environment variable, expanded at
-    runtime by the wrapper rather than treated as a literal string.
+    Environment variable helpers.
 
-    # Arguments
+    - `env.ref NAME`: marker placed inside an `env.<VAR>.value` list
+      to reference another variable at runtime. Empty/unset refs
+      drop out cleanly via a runtime join helper, so there are no
+      dangling separators.
 
-    - `name`: the name of the environment variable to reference.
+    - `env.render`: render an `env` attrset into a shell snippet.
+      Used by `wrapPackage` and exposed for tests.
 
-    # Example
+    `env.render` accepts the same shapes as the `env` module option:
 
-    ```nix
-    env.LD_LIBRARY_PATH.values = [
-      "/opt/lib"
-      (wlib.envRef "LD_LIBRARY_PATH")
-      "/other/lib"
-    ];
-    ```
-
-    Empty/unset references drop out at runtime, so there are no
-    stray separators if the referenced variable isn't set.
+      - `env.FOO = "bar"`               literal
+      - `env.FOO = null`                unset
+      - `env.FOO.value = "bar"`         literal (explicit)
+      - `env.FOO.value = [ "a" "b" ]`   list, joined with `separator`
+      - `env.FOO.value = [ "/opt/bin" (env.ref "PATH") ]`  prepend
+      - `env.FOO.ifUnset = true`        only set when caller hasn't
+      - `env.FOO.unset = true`          unset (takes precedence)
   */
-  envRef = name: {
-    _type = "envRef";
-    inherit name;
-    default = "";
-  };
-
-  /**
-    Normalise an `env` attribute set (as accepted by `wrapPackage` or
-    the `env` module option) into the canonical per-entry form with
-    all fields populated. Accepts:
-
-    - a plain string (becomes `{ value = <str>; }`)
-    - `null` (becomes `{ unset = true; }`)
-    - a partial attrset with any subset of the structured options
-  */
-  normaliseEnvEntry =
-    entry:
+  env =
     let
-      defaults = {
-        value = null;
-        values = [ ];
-        prefix = [ ];
-        suffix = [ ];
-        separator = ":";
-        fallback = false;
-        unset = false;
-      };
-      raw =
-        if entry == null then
+      esc =
+        s: ''"${lib.replaceStrings [ ''\'' ''"'' ] [ ''\\'' ''\"'' ] (toString s)}"'';
+
+      norm =
+        e:
+        if e == null then
           { unset = true; }
-        else if builtins.isString entry then
-          { value = entry; }
-        else if builtins.isAttrs entry then
-          entry
+        else if builtins.isString e || builtins.isList e then
+          { value = e; }
         else
-          throw "wrappers: unsupported env entry of type ${builtins.typeOf entry}";
-    in
-    defaults // raw;
-
-  /**
-    Render an `env` attribute set into a shell snippet that sets the
-    corresponding environment variables when sourced/evaluated. Used
-    internally by `wrapPackage` but exposed so downstream callers can
-    render env snippets themselves (e.g. for testing or composition).
-
-    Returns the empty string when there is nothing to emit.
-  */
-  renderEnvString =
-    env:
-    let
-      shellEscape =
-        s:
-        let
-          escaped = lib.replaceStrings [ ''\'' ''"'' ] [ ''\\'' ''\"'' ] (toString s);
-        in
-        ''"${escaped}"'';
+          e;
 
       renderPart =
-        part:
-        if builtins.isString part then
-          shellEscape part
-        else if (part._type or null) == "envRef" then
-          let
-            defaultEscaped = lib.replaceStrings [ ''\'' ''"'' ] [ ''\\'' ''\"'' ] (
-              part.default or ""
-            );
-          in
-          ''"''${${part.name}-${defaultEscaped}}"''
+        p:
+        if builtins.isString p then
+          esc p
+        else if (p._type or null) == "envRef" then
+          ''"''${${p.name}-}"''
         else
-          throw "wrappers: invalid env value part: ${lib.generators.toPretty { } part}";
+          throw "wlib.env.render: invalid part ${lib.generators.toPretty { } p}";
 
-      effectiveParts =
-        name: entry:
+      line =
+        name: raw:
         let
-          middle =
-            if entry.values != [ ] then
-              (lib.optional (entry.value != null) entry.value) ++ entry.values
-            else if entry.value != null then
-              [ entry.value ]
-            else if entry.prefix != [ ] || entry.suffix != [ ] then
-              [
-                {
-                  _type = "envRef";
-                  inherit name;
-                  default = "";
-                }
-              ]
+          e = norm raw;
+          unset = e.unset or false;
+          ifUnset = e.ifUnset or false;
+          val = e.value or null;
+          parts =
+            if val == null then
+              [ ]
+            else if builtins.isList val then
+              val
             else
-              [ ];
+              [ val ];
+          simple = lib.length parts == 1 && builtins.isString (lib.head parts);
+          sep = e.separator or ":";
+          body =
+            if unset then
+              "unset ${name}"
+            else if parts == [ ] then
+              null
+            else if simple then
+              "export ${name}=${esc (lib.head parts)}"
+            else
+              "export ${name}=\"$(_wrapper_env_join ${esc sep} ${
+                lib.concatStringsSep " " (map renderPart parts)
+              })\"";
+          wrapped =
+            if body == null then
+              null
+            else if ifUnset && !unset then
+              ''
+                if [ -z "''${${name}:-}" ]; then
+                  ${body}
+                fi''
+            else
+              body;
         in
-        entry.prefix ++ middle ++ entry.suffix;
+        {
+          join = !unset && !simple && wrapped != null;
+          text = wrapped;
+        };
 
-      entries = lib.mapAttrs (_: normaliseEnvEntry) env;
-
-      rendered = lib.mapAttrsToList (
-        name: entry:
-        if entry.unset then
-          {
-            needsJoin = false;
-            body = "unset ${name}";
-          }
-        else
-          let
-            parts = effectiveParts name entry;
-            isTrivialLiteral =
-              lib.length parts == 1
-              && builtins.isString (lib.head parts)
-              && entry.values == [ ]
-              && entry.prefix == [ ]
-              && entry.suffix == [ ];
-            body =
-              if parts == [ ] then
-                null
-              else if isTrivialLiteral then
-                "export ${name}=${shellEscape (lib.head parts)}"
-              else
-                let
-                  renderedParts = map renderPart parts;
-                  sepArg = shellEscape entry.separator;
-                in
-                "export ${name}=\"$(_wrapper_env_join ${sepArg} ${lib.concatStringsSep " " renderedParts})\"";
-            wrapped =
-              if body == null then
-                null
-              else if entry.fallback then
-                ''
-                  if [ -z "''${${name}+set}" ]; then
-                    ${body}
-                  fi''
-              else
-                body;
-          in
-          {
-            needsJoin = !isTrivialLiteral && body != null;
-            body = wrapped;
-          }
-      ) entries;
-
-      nonEmpty = lib.filter (r: r.body != null) rendered;
-      needsJoin = lib.any (r: r.needsJoin) nonEmpty;
-
-      joinHelper = ''
+      helper = ''
         _wrapper_env_join() {
-          local _sep="$1"
+          local sep="$1" out="" p
           shift
-          local _out=""
-          local _p
-          for _p in "$@"; do
-            [ -n "$_p" ] || continue
-            _out="''${_out:+$_out$_sep}$_p"
+          for p in "$@"; do
+            [ -n "$p" ] || continue
+            out="''${out:+$out$sep}$p"
           done
-          printf '%s' "$_out"
+          printf '%s' "$out"
         }'';
     in
-    if nonEmpty == [ ] then
-      ""
-    else
-      lib.concatStringsSep "\n" (
-        (lib.optional needsJoin joinHelper) ++ (map (r: r.body) nonEmpty)
-      )
-      + "\n";
+    {
+      ref = name: {
+        _type = "envRef";
+        inherit name;
+      };
+
+      render =
+        raw:
+        let
+          lines = lib.filter (l: l.text != null) (lib.mapAttrsToList line raw);
+          needsJoin = lib.any (l: l.join) lines;
+        in
+        if lines == [ ] then
+          ""
+        else
+          lib.concatStringsSep "\n" (
+            lib.optional needsJoin helper ++ map (l: l.text) lines
+          )
+          + "\n";
+    };
 
   /**
     A collection of types for wrapper modules.
@@ -666,7 +601,7 @@ let
       inherit (pkgs) lndir;
 
       # Generate environment variable exports
-      envString = wrapperLib.renderEnvString env;
+      envString = wrapperLib.env.render env;
 
       # Generate flag arguments with proper line breaks and indentation
       flagsString =
@@ -875,9 +810,7 @@ let
       escapeShellArgWithEnv
       generateArgsFromFlags
       flagToArgs
-      envRef
-      renderEnvString
-      normaliseEnvEntry
+      env
       ;
   };
 in

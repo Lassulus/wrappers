@@ -93,61 +93,42 @@ wrappers.lib.wrapPackage {
 
 ### Environment Variables
 
-Environment variables can be set in three forms, with the richer form
-available both via `wrapPackage` and through the `env.<NAME>` option
-of wrapper modules.
+Each `env.<NAME>` entry is either a plain string, `null` (to unset),
+or a small submodule:
 
 ```nix
 {
   env = {
-    # 1. Plain literal string (same as before):
+    # Literal:
     FOO = "bar";
 
-    # 2. Null to explicitly unset a variable inherited from the
-    #    caller's environment:
+    # Unset a variable inherited from the caller:
     NOISY_OLD_VAR = null;
 
-    # 3. Structured form with the following fields:
-    #
-    #    - value: literal string
-    #    - prefix / suffix: parts to splice around the existing value
-    #      of the variable (like `makeWrapper --prefix/--suffix`).
-    #      Empty or unset existing values drop out cleanly.
-    #    - values: explicit list of parts, joined with `separator`.
-    #      Use `wlib.envRef "OTHER"` to reference another variable
-    #      at runtime.
-    #    - separator: join separator (default ":")
-    #    - fallback: only set if the variable isn't already set
-    #    - unset: emit `unset VAR` (takes precedence)
+    # Prepend to PATH using a list and `wlib.env.ref`. The ref
+    # expands to the caller's existing PATH at runtime; if it's
+    # unset or empty, the ref drops out and no stray separators
+    # are left behind.
+    PATH.value = [ "/opt/bin" (wrappers.lib.env.ref "PATH") ];
 
-    # Prepend to PATH, keeping the caller's existing entries:
-    PATH.prefix = [ "/opt/bin" ];
-
-    # Append to XDG_DATA_DIRS:
-    XDG_DATA_DIRS.suffix = [ "/opt/share" ];
-
-    # Build LD_LIBRARY_PATH with the existing value somewhere in the
-    # middle, not just at the edges:
-    LD_LIBRARY_PATH.values = [
-      "/opt/lib"
-      (wrappers.lib.envRef "LD_LIBRARY_PATH")
-      "/other/lib"
-    ];
-
-    # Only set EDITOR if the user hasn't picked one already:
-    EDITOR = {
-      value = "vim";
-      fallback = true;
-    };
+    # Only set EDITOR if the caller hasn't already picked one.
+    EDITOR = { value = "vim"; ifUnset = true; };
   };
 }
 ```
 
-`prefix`, `suffix` and `values` are lists, so they compose via module
-merging: multiple modules (or multiple `apply` calls) contributing to
-the same variable stack their contributions instead of fighting over
-a single string. Empty parts are filtered at runtime, so unset env
-references never leave behind dangling separators.
+Submodule options:
+- `value`: literal string *or* a list of parts joined with
+  `separator`. List parts can be plain strings or
+  `wlib.env.ref "NAME"` runtime references.
+- `separator`: join separator for list values (default `:`).
+- `ifUnset`: only apply when the caller's environment doesn't
+  already have the variable set.
+- `unset`: unset the variable (takes precedence over `value`).
+
+List `value`s merge by concatenation when composed via `apply`, so
+multiple modules stack contributions onto the same variable without
+fighting over a single string.
 
 ### Creating Custom Wrapper Modules
 
