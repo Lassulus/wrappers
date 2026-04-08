@@ -121,12 +121,18 @@ submodule:
 ```
 
 Submodule options:
-- `value`: literal string *or* a list of parts joined with
-  `separator`. List parts can be plain strings or
+- `value`: a list of parts joined with `separator`. Plain strings
+  coerce to singleton lists, so `env.FOO = "bar"` works, but
+  reading back always gives a list. Parts can be plain strings or
   `wlib.env.ref "NAME"` runtime references.
-- `separator`: join separator for list values (default `:`).
+- `separator`: join separator (default `:`).
 - `ifUnset`: only apply when the caller's environment doesn't
   already have the variable set (empty counts as unset).
+
+`value` is always a list when read back, so consumers inspecting
+another wrapper's config don't need to safeguard against two
+types. To read a literal entry as a joined string, use
+`lib.concatStringsSep entry.separator entry.value`.
 
 List `value`s merge by concatenation when composed via `apply`, so
 multiple modules stack contributions onto the same variable without

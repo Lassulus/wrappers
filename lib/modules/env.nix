@@ -15,7 +15,7 @@ let
     merge = lib.options.mergeEqualOption;
   };
 
-  valueType = lib.types.either lib.types.str (lib.types.listOf envPart);
+  valueType = lib.types.coercedTo lib.types.str (v: [ v ]) (lib.types.listOf envPart);
 
   entry = lib.types.submodule {
     options = {
@@ -23,12 +23,17 @@ let
         type = lib.types.nullOr valueType;
         default = null;
         description = ''
-          What to set the variable to. Accepts either a single
-          string (literal), or a list of parts joined with
-          `separator`. List parts can be plain strings or
-          `wlib.env.ref "NAME"` runtime references; empty parts
-          (e.g. unset refs) are filtered at runtime so no dangling
-          separators are left behind.
+          Parts to join with `separator`. Accepts a plain string
+          (coerced to a singleton list) or a list of parts. List
+          parts can be plain strings or `wlib.env.ref "NAME"`
+          runtime references; empty parts are filtered at runtime
+          so unset refs don't leave dangling separators.
+
+          This option is always a list when read back. To read a
+          known-literal entry as a string from another wrapper's
+          config, use `lib.head entry.value` (for a singleton) or
+          `lib.concatStringsSep entry.separator entry.value` (for
+          multiple literal parts).
         '';
       };
       separator = lib.mkOption {
@@ -91,9 +96,13 @@ in
     internal = true;
     readOnly = true;
     description = "Plain literal `env` entries, for integrations like systemd.";
-    default = lib.mapAttrs (_: e: e.value) (
+    default = lib.mapAttrs (_: e: lib.concatStringsSep e.separator e.value) (
       lib.filterAttrs (
-        _: e: !e.ifUnset && e.value != null && !(builtins.isList e.value)
+        _: e:
+        !e.ifUnset
+        && e.value != null
+        && e.value != [ ]
+        && lib.all builtins.isString e.value
       ) config.env
     );
   };

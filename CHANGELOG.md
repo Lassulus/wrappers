@@ -32,16 +32,19 @@
   `config.flags` returns clean values (order is transparent).
 - `lib/modules/env.nix`: env module with per-variable options for
   safe composition through the NixOS module system.
-  - `env.<VAR>.value`: string for a simple literal, or a list of
-    parts to join with `separator`. List parts can be plain strings
-    or `wlib.env.ref "NAME"` runtime references. Empty/unset refs
-    drop out cleanly, so no dangling separators.
-  - `env.<VAR>.separator`: join separator for a list `value`
-    (default `:`).
+  - `env.<VAR>.value`: always a list of parts joined with
+    `separator`. A plain string coerces to a singleton list, so
+    `env.FOO = "bar"` works, but reading back always gives a list.
+    Parts can be plain strings or `wlib.env.ref "NAME"` runtime
+    references. Empty/unset refs drop out cleanly, so no dangling
+    separators.
+  - `env.<VAR>.separator`: join separator for `value` (default `:`).
   - `env.<VAR>.ifUnset = true`: only apply when the caller's
     environment doesn't already have the variable set.
   - List `value`s merge by concatenation when composed via `apply`,
     so modules stack contributions without fighting over a string.
+  - To read another wrapper's literal entry as a string, use
+    `lib.concatStringsSep entry.separator entry.value`.
 - `wlib.env.ref NAME`: marker for a runtime env-variable reference
   inside `env.<VAR>.value` lists.
 - `wlib.env.render`: render an `env` attrset into a shell snippet.
