@@ -45,17 +45,12 @@ let
           like `EDITOR = "vim"`.
         '';
       };
-      unset = lib.mkOption {
-        type = lib.types.bool;
-        default = false;
-        description = "Unset the variable (takes precedence over `value`).";
-      };
     };
   };
 
   envValue = lib.types.coercedTo (
-    lib.types.nullOr (lib.types.either lib.types.str lib.types.path)
-  ) (v: if v == null then { unset = true; } else { value = toString v; }) entry;
+    lib.types.either lib.types.str lib.types.path
+  ) (v: { value = toString v; }) entry;
 in
 {
   _file = "lib/modules/env.nix";
@@ -66,7 +61,6 @@ in
     example = lib.literalExpression ''
       {
         FOO = "bar";                                        # literal
-        BLOAT = null;                                       # unset
         PATH.value = [ "/opt/bin" (wlib.env.ref "PATH") ];  # prepend
         EDITOR = { value = "vim"; ifUnset = true; };        # default
       }
@@ -74,10 +68,11 @@ in
     description = ''
       Environment variables to set in the wrapper.
 
-      Each entry accepts:
-      - a plain string: literal value
-      - `null`: unset the variable
-      - a submodule with `value`/`separator`/`ifUnset`/`unset`
+      Each entry accepts a plain string (literal) or a submodule
+      with `value` / `separator` / `ifUnset`. Unset a variable by
+      putting `unset VAR` in `preHook` — the wrapper already runs
+      arbitrary shell there and that's the cleanest way to scrub
+      inherited env.
 
       To prepend/append to an existing variable, pass `value` as a
       list and include `wlib.env.ref "NAME"` at the point where the
@@ -98,8 +93,7 @@ in
     description = "Plain literal `env` entries, for integrations like systemd.";
     default = lib.mapAttrs (_: e: e.value) (
       lib.filterAttrs (
-        _: e:
-        !e.unset && !e.ifUnset && e.value != null && !(builtins.isList e.value)
+        _: e: !e.ifUnset && e.value != null && !(builtins.isList e.value)
       ) config.env
     );
   };

@@ -16,11 +16,12 @@
   remove it (or change to `null`).
 
 - `env` option type changed from `attrsOf str` to a small submodule
-  with `value` / `separator` / `ifUnset` / `unset`. Plain strings
-  and `null` keep working via coercion (`env.FOO = "bar"` and
-  `env.FOO = null` are unchanged). The systemd integration reads
-  from `config.outputs.staticEnv` instead of `config.env` and drops
-  any entries it can't express as a literal assignment.
+  with `value` / `separator` / `ifUnset`. Plain strings keep working
+  via coercion (`env.FOO = "bar"` is unchanged). To unset a
+  variable, put `unset VAR` in `preHook` — the module system
+  doesn't model it as a declarative option. The systemd integration
+  reads from `config.outputs.staticEnv` instead of `config.env` and
+  drops any entries it can't express as a literal assignment.
 
 ### Added
 
@@ -39,8 +40,6 @@
     (default `:`).
   - `env.<VAR>.ifUnset = true`: only apply when the caller's
     environment doesn't already have the variable set.
-  - `env.<VAR>.unset = true`: emit `unset VAR` instead of an
-    assignment. `env.VAR = null` is sugar for this.
   - List `value`s merge by concatenation when composed via `apply`,
     so modules stack contributions without fighting over a string.
 - `wlib.env.ref NAME`: marker for a runtime env-variable reference

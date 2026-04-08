@@ -23,20 +23,6 @@ let
       '';
     }
     {
-      name = "null-unsets";
-      input.FOO = null;
-      expected = ''
-        unset FOO
-      '';
-    }
-    {
-      name = "explicit-unset";
-      input.FOO.unset = true;
-      expected = ''
-        unset FOO
-      '';
-    }
-    {
       name = "if-unset";
       input.EDITOR = {
         value = "vim";

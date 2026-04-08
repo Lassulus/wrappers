@@ -93,17 +93,14 @@ wrappers.lib.wrapPackage {
 
 ### Environment Variables
 
-Each `env.<NAME>` entry is either a plain string, `null` (to unset),
-or a small submodule:
+Each `env.<NAME>` entry is either a plain string or a small
+submodule:
 
 ```nix
 {
   env = {
     # Literal:
     FOO = "bar";
-
-    # Unset a variable inherited from the caller:
-    NOISY_OLD_VAR = null;
 
     # Prepend to PATH using a list and `wlib.env.ref`. The ref
     # expands to the caller's existing PATH at runtime; if it's
@@ -114,6 +111,12 @@ or a small submodule:
     # Only set EDITOR if the caller hasn't already picked one.
     EDITOR = { value = "vim"; ifUnset = true; };
   };
+
+  # To unset a variable inherited from the caller, drop a line in
+  # preHook — the env option is for declarative assignments only:
+  preHook = ''
+    unset LD_PRELOAD
+  '';
 }
 ```
 
@@ -123,8 +126,7 @@ Submodule options:
   `wlib.env.ref "NAME"` runtime references.
 - `separator`: join separator for list values (default `:`).
 - `ifUnset`: only apply when the caller's environment doesn't
-  already have the variable set.
-- `unset`: unset the variable (takes precedence over `value`).
+  already have the variable set (empty counts as unset).
 
 List `value`s merge by concatenation when composed via `apply`, so
 multiple modules stack contributions onto the same variable without

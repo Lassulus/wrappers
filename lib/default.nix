@@ -137,12 +137,12 @@ let
     `env.render` accepts the same shapes as the `env` module option:
 
       - `env.FOO = "bar"`               literal
-      - `env.FOO = null`                unset
       - `env.FOO.value = "bar"`         literal (explicit)
       - `env.FOO.value = [ "a" "b" ]`   list, joined with `separator`
       - `env.FOO.value = [ "/opt/bin" (env.ref "PATH") ]`  prepend
       - `env.FOO.ifUnset = true`        only set when caller hasn't
-      - `env.FOO.unset = true`          unset (takes precedence)
+
+    To unset a variable, put `unset VAR` in `preHook` instead.
   */
   env =
     let
@@ -151,12 +151,7 @@ let
 
       norm =
         e:
-        if e == null then
-          { unset = true; }
-        else if builtins.isString e || builtins.isList e then
-          { value = e; }
-        else
-          e;
+        if builtins.isString e || builtins.isList e then { value = e; } else e;
 
       renderPart =
         p:
@@ -171,8 +166,6 @@ let
         name: raw:
         let
           e = norm raw;
-          unset = e.unset or false;
-          ifUnset = e.ifUnset or false;
           val = e.value or null;
           parts =
             if val == null then
@@ -184,9 +177,7 @@ let
           simple = lib.length parts == 1 && builtins.isString (lib.head parts);
           sep = e.separator or ":";
           body =
-            if unset then
-              "unset ${name}"
-            else if parts == [ ] then
+            if parts == [ ] then
               null
             else if simple then
               "export ${name}=${esc (lib.head parts)}"
@@ -197,7 +188,7 @@ let
           wrapped =
             if body == null then
               null
-            else if ifUnset && !unset then
+            else if e.ifUnset or false then
               ''
                 if [ -z "''${${name}:-}" ]; then
                   ${body}
@@ -206,7 +197,7 @@ let
               body;
         in
         {
-          join = !unset && !simple && wrapped != null;
+          join = !simple && wrapped != null;
           text = wrapped;
         };
 
