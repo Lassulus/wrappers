@@ -137,6 +137,11 @@ in
           default = true;
           description = "append history for every new session instead of replacing it";
         };
+        file = lib.mkOption {
+          type = lib.types.str;
+          default = "$HOME/.zsh_history";
+          description = "location to save the history";
+        };
         expanded = lib.mkOption {
           type = lib.types.bool;
           default = false;
@@ -149,7 +154,7 @@ in
         };
         save = lib.mkOption {
           type = lib.types.int;
-          default = 10000;
+          default = cfg.history.size;
           description = "the number of history lines to save";
         };
         size = lib.mkOption {
@@ -262,7 +267,8 @@ in
           "# History"
 
           "HISTSIZE=${toString cfg.history.size}"
-          "HISTSAVE=${toString cfg.history.save}"
+          "SAVEHIST=${toString cfg.history.save}"
+          "HISTFILE=${toString cfg.history.file}"
 
           (lib.optionalString cfg.history.append "setopt appendhistory")
           (lib.optionalString cfg.history.share "setopt sharehistory")
