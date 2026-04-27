@@ -30,7 +30,7 @@ in
 
   config.flagSeparator = "=";
   config.flags = {
-    "--config" = toString config."config.yml".path;
+    "--config" = config."config.yml".path;
   };
 
   config.exePath = "${config.package}/bin/udiskie";

@@ -26,7 +26,7 @@ in
   };
   config = {
     package = config.pkgs.fastfetch;
-    flags."--config" = "${config."config.jsonc".path}";
+    flags."--config" = config."config.jsonc".path;
     meta.maintainers = [
       {
         name = "holly";

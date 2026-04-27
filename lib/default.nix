@@ -21,40 +21,40 @@ let
       [ ]
     else if flag == true then
       [ name ]
-    else if builtins.isString flag then
+    else if lib.isStringLike flag then
       if flagSeparator == null then
         [
           name
-          flag
+          (toString flag)
         ]
       else
-        [ "${name}${flagSeparator}${flag}" ]
+        [ "${name}${flagSeparator}${toString flag}" ]
 
     else if lib.isList flag then
       lib.concatMap (
         v:
-        if builtins.isString v then
+        if lib.isStringLike v then
           if flagSeparator == null then
             [
               name
-              v
+              (toString v)
             ]
           else
-            [ "${name}${flagSeparator}${v}" ]
+            [ "${name}${flagSeparator}${toString v}" ]
         else if builtins.isList v then
           [ name ]
           ++ (map (
             v_:
-            if builtins.isString v_ then
-              v_
+            if lib.isStringLike v_ then
+              toString v_
             else
-              throw "flag ${name} has unsupported list element type ${lib.typeOf v_}, expected str"
+              throw "flag ${name} has unsupported list element type ${lib.typeOf v_}, expected path or str"
           ) v)
         else
-          throw "flag ${name} has unsupported list element type ${lib.typeOf v}, expected str or list"
+          throw "flag ${name} has unsupported list element type ${lib.typeOf v}, expected path, str or list"
       ) flag
     else
-      throw "flag ${name} has unsupported type ${lib.typeOf flag}, expected bool, str, or list";
+      throw "flag ${name} has unsupported type ${lib.typeOf flag}, expected bool, path, str, or list";
 
   # Helper function to generate args list from flags attrset
   generateArgsFromFlags =

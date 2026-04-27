@@ -51,7 +51,7 @@ in
   config = {
     package = config.pkgs.way-edges;
     flags = {
-      "--config-path" = toString config.configFile.path;
+      "--config-path" = config.configFile.path;
     };
     meta.maintainers = [
       {

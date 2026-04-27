@@ -61,7 +61,7 @@ in
     ];
     flagSeparator = "=";
     flags = {
-      "--config-file" = toString config.configFile.path;
+      "--config-file" = config.configFile.path;
     };
     package = config.pkgs.ghostty;
     meta = {

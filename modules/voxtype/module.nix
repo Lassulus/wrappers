@@ -77,7 +77,7 @@ in
     };
   };
   config.flags = {
-    "--config" = toString config."voxtype.toml".path;
+    "--config" = config."voxtype.toml".path;
   };
   config.package = config.pkgs.voxtype;
   config.meta.maintainers = [ lib.maintainers.lenny ];

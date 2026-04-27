@@ -17,7 +17,7 @@
   };
 
   config.flags = {
-    "--config" = toString config."hypr.conf".path;
+    "--config" = config."hypr.conf".path;
   };
 
   config.package = config.pkgs.hyprland;
