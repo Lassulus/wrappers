@@ -38,6 +38,13 @@ let
     };
   };
 
+  # Test 5: Custom binName updates meta.mainProgram
+  wrappedWithMeta = self.lib.wrapPackage {
+    inherit pkgs;
+    package = pkgs.hello;
+    binName = "hello-wrapped";
+  };
+
 in
 pkgs.runCommand "exe-path-bin-name-test" { } ''
   set -e
@@ -121,6 +128,15 @@ pkgs.runCommand "exe-path-bin-name-test" { } ''
     echo "PASS: Binary with flags executes correctly"
   else
     echo "FAIL: Binary with flags produced no output"
+    exit 1
+  fi
+
+  # Test 5: Custom binName updates meta.mainProgram
+  echo -e "\n=== Test 5: custom binName meta.mainProgram ==="
+  if [ "${wrappedWithMeta.meta.mainProgram}" = "hello-wrapped" ]; then
+    echo "PASS: meta.mainProgram follows custom binName"
+  else
+    echo "FAIL: meta.mainProgram should be 'hello-wrapped', got '${wrappedWithMeta.meta.mainProgram}'"
     exit 1
   fi
 
