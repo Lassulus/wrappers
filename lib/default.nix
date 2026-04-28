@@ -677,8 +677,11 @@ let
                   }
                 );
             };
-          # Pass through original attributes
-          meta = package.meta or { };
+          meta =
+            (package.meta or { })
+            // lib.optionalAttrs (binName != null) {
+              mainProgram = binName;
+            };
         }
         // lib.optionalAttrs (package ? version) {
           inherit (package) version;
