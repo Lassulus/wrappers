@@ -53,7 +53,7 @@ in
   };
 
   config.flags = {
-    "--config" = toString config."kitty.conf".path;
+    "--config" = config."kitty.conf".path;
   };
 
   config.package = config.pkgs.kitty;

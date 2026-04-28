@@ -7,12 +7,19 @@
 }:
 let
   flagValueType = lib.types.oneOf [
-    (lib.types.uniq lib.types.str)
     (lib.types.uniq lib.types.bool)
+    (lib.types.uniq lib.types.path)
+    (lib.types.uniq lib.types.str)
     (lib.types.listOf (
       lib.types.oneOf [
+        lib.types.path
         lib.types.str
-        (lib.types.listOf lib.types.str)
+        (lib.types.listOf (
+          lib.types.oneOf [
+            lib.types.path
+            lib.types.str
+          ]
+        ))
       ]
     ))
   ];

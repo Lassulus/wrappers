@@ -37,7 +37,7 @@ in
   config = {
     flagSeparator = "=";
     flags = {
-      "--config" = toString config.configFile.path;
+      "--config" = config.configFile.path;
     };
     package = config.pkgs.mako;
     filesToPatch = [

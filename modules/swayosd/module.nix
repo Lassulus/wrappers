@@ -44,8 +44,8 @@ in
   };
 
   config.flags = {
-    "--config" = "${config."config.toml".path}";
-    "--style" = if (config.style.content != "") then "${config.style.path}" else false;
+    "--config" = config."config.toml".path;
+    "--style" = if config.style.content != "" then config.style.path else false;
   };
 
   config.exePath = lib.getExe' config.pkgs.swayosd "swayosd-server";

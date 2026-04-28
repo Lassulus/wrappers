@@ -17,7 +17,7 @@
   };
 
   config.flags = {
-    "--config" = toString config.configFile.path;
+    "--config" = config.configFile.path;
   };
 
   config.package = config.pkgs.i3;

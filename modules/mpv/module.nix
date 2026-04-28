@@ -23,8 +23,8 @@
   };
   config.flagSeparator = "=";
   config.flags = {
-    "--input-conf" = toString config."input.conf".path;
-    "--include" = toString config."mpv.conf".path;
+    "--input-conf" = config."input.conf".path;
+    "--include" = config."mpv.conf".path;
   };
   config.package = (
     config.pkgs.mpv.override {

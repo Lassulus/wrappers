@@ -54,7 +54,7 @@ in
   config = {
     filesToPatch = [ "share/systemd/user/foot-server.service" ];
     flags = {
-      "--config" = toString config."foot.ini".path;
+      "--config" = config."foot.ini".path;
     };
     package = config.pkgs.foot;
     meta = {
