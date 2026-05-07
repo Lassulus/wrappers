@@ -61,7 +61,7 @@ let
   mkOutput =
     type:
     let
-      unitDir = if type == "user" then "systemd/user" else "systemd/system";
+      unitDir = if type == "user" then "lib/systemd/user" else "lib/systemd/system";
 
       serviceFile = pkgs.writeTextDir "${unitDir}/${serviceName}.service" (systemdLib.serviceToUnit svc)
       .text;

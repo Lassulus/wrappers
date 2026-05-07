@@ -279,10 +279,10 @@ let
     }
   );
 
-  readUserService = drv: name: builtins.readFile "${drv}/systemd/user/${name}.service";
-  readSystemService = drv: name: builtins.readFile "${drv}/systemd/system/${name}.service";
-  readUserTimer = drv: name: builtins.readFile "${drv}/systemd/user/${name}.timer";
-  readSystemTimer = drv: name: builtins.readFile "${drv}/systemd/system/${name}.timer";
+  readUserService = drv: name: builtins.readFile "${drv}/lib/systemd/user/${name}.service";
+  readSystemService = drv: name: builtins.readFile "${drv}/lib/systemd/system/${name}.service";
+  readUserTimer = drv: name: builtins.readFile "${drv}/lib/systemd/user/${name}.timer";
+  readSystemTimer = drv: name: builtins.readFile "${drv}/lib/systemd/system/${name}.timer";
 in
 pkgs.runCommand "systemd-test" { } ''
   echo "Testing systemd module..."
@@ -314,14 +314,14 @@ pkgs.runCommand "systemd-test" { } ''
 
   # Test 3: Service name from binName
   echo "Test 3: Service name from binName"
-  test -f "${customBinName.outputs.systemd-user}/systemd/user/my-hello.service" || {
+  test -f "${customBinName.outputs.systemd-user}/lib/systemd/user/my-hello.service" || {
     echo "FAIL: user service file should be named my-hello.service"
-    ls -la "${customBinName.outputs.systemd-user}/systemd/user/"
+    ls -la "${customBinName.outputs.systemd-user}/lib/systemd/user/"
     exit 1
   }
-  test -f "${customBinName.outputs.systemd-system}/systemd/system/my-hello.service" || {
+  test -f "${customBinName.outputs.systemd-system}/lib/systemd/system/my-hello.service" || {
     echo "FAIL: system service file should be named my-hello.service"
-    ls -la "${customBinName.outputs.systemd-system}/systemd/system/"
+    ls -la "${customBinName.outputs.systemd-system}/lib/systemd/system/"
     exit 1
   }
   echo "PASS: service name from binName"
