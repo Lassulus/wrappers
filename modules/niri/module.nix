@@ -122,6 +122,7 @@ let
 in
 {
   _class = "wrapper";
+  imports = [ wlib.modules.systemd ];
   options = {
     settings = lib.mkOption {
       type = lib.types.submodule {
@@ -304,13 +305,55 @@ in
         '';
       };
   };
-  config.filesToPatch = [
-    "share/applications/*.desktop"
+  # Drop the upstream user unit; we ship our own (below) with ExecReload
+  # wired up to the niri IPC. Keep the desktop entry patched so display
+  # managers still pick up the wrapper's binary.
+  config.filesToExclude = [
+    "lib/systemd/user/niri.service"
     "share/systemd/user/niri.service"
   ];
+  config.filesToPatch = [
+    "share/applications/*.desktop"
+  ];
   config.package = config.pkgs.niri;
-  config.env = {
-    NIRI_CONFIG = toString config."config.kdl".path;
+
+  # Shell-launched wrapper: same behaviour as upstream -- niri reads the
+  # immutable, build-pinned config straight from /nix/store.
+  config.env.NIRI_CONFIG = toString config."config.kdl".path;
+
+  # Systemd-launched session: bootstrap a mutable runtime copy under
+  # $XDG_RUNTIME_DIR (systemd specifier %t) and point niri at it via
+  # `--config`. ExecReload re-stamps that file with the latest immutable
+  # snapshot and asks niri to re-read it via IPC, so config-only switches
+  # apply without dropping the session.
+  config.systemd = {
+    description = "A scrollable-tiling Wayland compositor";
+    bindsTo = [ "graphical-session.target" ];
+    before = [
+      "graphical-session.target"
+      "xdg-desktop-autostart.target"
+    ];
+    wants = [
+      "graphical-session-pre.target"
+      "xdg-desktop-autostart.target"
+    ];
+    after = [ "graphical-session-pre.target" ];
+    serviceConfig = {
+      Slice = "session.slice";
+      Type = "notify";
+      ExecStartPre = "${config.pkgs.coreutils}/bin/install -Dm644 ${config."config.kdl".path} %t/niri/config.kdl";
+      ExecStart = "${config.exePath} --session --config %t/niri/config.kdl";
+      ExecReload = [
+        "${config.pkgs.coreutils}/bin/install -Dm644 ${config."config.kdl".path} %t/niri/config.kdl"
+        "${config.exePath} msg action load-config-file"
+      ];
+    };
+    # Tell NixOS's switch-to-configuration to convert every "needs
+    # restart" verdict into `systemctl --user reload niri.service`, so
+    # config-only switches reload the live session via ExecReload instead
+    # of killing it. The flag is read out of the unit's [Service] section
+    # at switch time (X-ReloadIfChanged=true).
+    reloadIfChanged = true;
   };
   config.meta.maintainers = [
     lib.maintainers.zimward
