@@ -40,7 +40,6 @@
 
   options.outputs.wrapper = lib.mkOption {
     type = lib.types.package;
-    readOnly = true;
     description = ''
       The wrapped package created by wrapPackage. This wraps the configured package
       with the specified flags, environment variables, runtime dependencies, and other
