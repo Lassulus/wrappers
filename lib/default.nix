@@ -531,8 +531,6 @@ let
           {
             inherit name outputs;
 
-            nativeBuildInputs = lib.optionals (filesToPatch != [ ]) [ pkgs.replace ];
-
             buildCommand = ''
               # Symlink all paths to the main output
               mkdir -p $out
@@ -572,7 +570,7 @@ let
                         # Remove symlink and create a real file with patched content
                         rm "$file"
                         # Use replace-literal which works for both text and binary files
-                        replace-literal "$oldPath" "$newPath" < "$target" > "$file"
+                        substitute "$target" "$file" --replace-fail "$oldPath" "$newPath"
                         # Preserve permissions
                         chmod --reference="$target" "$file"
                       fi
