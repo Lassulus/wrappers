@@ -36,14 +36,14 @@
     '';
   };
   options.preHook = lib.mkOption {
-    type = lib.types.str;
+    type = lib.types.lines;
     default = "";
     description = ''
       Shell script to run before executing the command.
     '';
   };
   options.postHook = lib.mkOption {
-    type = lib.types.str;
+    type = lib.types.lines;
     default = "";
     description = ''
       Shell script to run after executing the command.
