@@ -34,7 +34,11 @@ jobs:
       - name: Setup Nix cache
         uses: nix-community/cache-nix-action@v7
         with:
-          primary-key: nix-${{ runner.os }}
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-
+          # don't keep caches from previous CI runs around. newest main should always be enough
+          purge: true
+          purge-prefixes: nix-${{ runner.os }}-
 
       - name: Run checks
         run: nix flake check --log-format bar-with-logs
