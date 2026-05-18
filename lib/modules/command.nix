@@ -40,6 +40,7 @@
     default = "";
     description = ''
       Shell script to run before executing the command.
+      Multiple definitions are concatenated with newlines.
     '';
   };
   options.postHook = lib.mkOption {
@@ -49,6 +50,7 @@
       Shell script to run after executing the command.
       Removes the `exec` call in the wrapper script which will leave a bash process
       in the background, therefore use with care.
+      Multiple definitions are concatenated with newlines.
     '';
   };
   options.exePath = lib.mkOption {
