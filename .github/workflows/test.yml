@@ -39,6 +39,8 @@ jobs:
           # don't keep caches from previous CI runs around. newest main should always be enough
           purge: true
           purge-prefixes: nix-${{ runner.os }}-
+          purge-created: 0
+          purge-primary-key: never
 
       - name: Run checks
         run: nix flake check --log-format bar-with-logs
