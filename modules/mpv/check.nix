@@ -15,6 +15,6 @@ let
 
 in
 pkgs.runCommand "mpv-test" { } ''
-  "${mpvWrapped}/bin/mpv" --version | grep -q "mpv"
+  [[ "$(${mpvWrapped}/bin/mpv --version)" == *mpv* ]]
   touch $out
 ''

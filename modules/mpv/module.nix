@@ -12,7 +12,7 @@
       default = [ ];
       description = "Scripts to add to mpv via override.";
     };
-    "mpv.input" = lib.mkOption {
+    "input.conf" = lib.mkOption {
       type = wlib.types.file config.pkgs;
       default.content = "";
     };
@@ -23,8 +23,8 @@
   };
   config.flagSeparator = "=";
   config.flags = {
-    "--input-conf" = toString config."mpv.input".path;
-    "--include" = toString config."mpv.conf".path;
+    "--input-conf" = config."input.conf".path;
+    "--include" = config."mpv.conf".path;
   };
   config.package = (
     config.pkgs.mpv.override {

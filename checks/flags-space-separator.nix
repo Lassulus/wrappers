@@ -11,7 +11,6 @@ let
       "--greeting" = "hi";
       "--verbose" = true;
     };
-    flagSeparator = " ";
   };
 
 in

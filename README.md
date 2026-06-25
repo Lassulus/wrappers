@@ -40,7 +40,7 @@ This library provides two main components:
           vo=gpu
           hwdec=auto
         '';
-        "mpv.input".content = ''
+        "input.conf".content = ''
           WHEEL_UP seek 10
           WHEEL_DOWN seek -10
         '';
@@ -140,12 +140,14 @@ Arguments:
   - Example: `[ "--silent" "--connect-timeout" "30" ]`
   - If provided, overrides automatic generation from `flags`
 - `preHook`: Shell script executed before the command (default: `""`)
+- `postHook`: Shell script executed after the command. This will leave a bash process running, use with caution (default: `""`)
 - `passthru`: Additional attributes for the derivation's passthru (default: `{}`)
 - `aliases`: List of additional symlink names for the executable (default: `[]`)
 - `filesToPatch`: List of file paths (glob patterns) relative to package root to patch for self-references (default: `["share/applications/*.desktop"]`)
   - Example: `["bin/*", "lib/*.sh"]` to replace original package paths with wrapped package paths
   - Desktop files are patched by default to update Exec= and Icon= paths
 - `filesToExclude`: List of file paths (glob patterns) to exclude from the wrapped package (default: `[]`)
+- `patchHook`: Shell script that runs after patchPhase to modify the wrapper package files (default: `""`)
 - `wrapper`: Custom wrapper function (optional, overrides default exec wrapper)
 
 The function:
@@ -170,11 +172,17 @@ Built-in options (always available):
 - `flagSeparator`: Separator between flag name and value (default: `" "`)
 - `args`: Command-line arguments list (auto-generated from `flags` if not provided)
 - `env`: Environment variables
+- `preHook`: Shell script executed before the command (default: `""`)
+- `postHook`: Shell script executed after the command. This will leave a bash process running, use with caution (default: `""`)
 - `passthru`: Additional passthru attributes
 - `filesToPatch`: List of file paths (glob patterns) to patch for self-references (default: `["share/applications/*.desktop"]`)
 - `filesToExclude`: List of file paths (glob patterns) to exclude from the wrapped package (default: `[]`)
+- `patchHook`: Shell script that runs after patchPhase to modify the wrapper package files (default `""`)
 - `wrapper`: The resulting wrapped package (read-only, auto-generated from other options)
 - `apply`: Function to extend the configuration with additional modules (read-only)
+
+Optional modules (import via `wlib.modules.<name>`):
+- `systemd`: Generates systemd service files (user and/or system), options are passed through from NixOS
 
 Custom types:
 - `wlib.types.file`: File type with `content` and `path` options
@@ -231,7 +239,7 @@ Wraps mpv with configuration file support and script management:
     vo=gpu
     profile=gpu-hq
   '';
-  "mpv.input".content = ''
+  "input.conf".content = ''
     RIGHT seek 5
     LEFT seek -5
   '';
@@ -259,6 +267,105 @@ Wraps notmuch with INI-based configuration:
     };
   };
 }).wrapper
+```
+
+### Generating systemd Services
+
+Import `wlib.modules.systemd` to generate systemd service files for your wrapper.
+The options under `systemd` are the same as `systemd.services.<name>` in NixOS,
+passed through directly.
+
+`ExecStart` (including args), `Environment`, `PATH`, `preStart` and `postStop`
+are picked up from the wrapper automatically, so you only need to set what's
+specific to the service.
+
+The same config produces both a user and system service file, available at
+`config.outputs.systemd-user` and `config.outputs.systemd-system`. Use
+whichever fits your deployment.
+
+```nix
+wlib.wrapModule ({ config, wlib, ... }: {
+  imports = [ wlib.modules.systemd ];
+
+  config = {
+    package = config.pkgs.hello;
+    flags."--greeting" = "world";
+    env.HELLO_LANG = "en";
+    systemd = {
+      description = "Hello service";
+      serviceConfig.Type = "simple";
+      serviceConfig.Restart = "on-failure";
+    };
+  };
+})
+```
+
+Settings merge when using `apply`:
+
+```nix
+extended = myWrapper.apply {
+  systemd.serviceConfig.Restart = "always";
+  systemd.environment.EXTRA = "value";
+};
+```
+
+#### Using in NixOS
+
+You need both `systemd.packages` for the unit file and the corresponding
+`wantedBy` to actually activate it. NixOS does not read the `[Install]` section
+from unit files, it creates the `.wants` symlinks from the module option instead.
+
+As a user service (for all users):
+
+```nix
+# configuration.nix
+{ pkgs, wrappers, ... }:
+let
+  myHello = wrappers.wrapperModules.hello.apply {
+    inherit pkgs;
+    systemd.serviceConfig.Restart = "always";
+  };
+in {
+  systemd.packages = [ myHello.outputs.systemd-user ];
+  # NixOS needs this to create the .wants symlink, the [Install]
+  # section in the unit file alone is not enough
+  systemd.user.services.hello.wantedBy = [ "default.target" ];
+}
+```
+
+As a system service:
+
+```nix
+# configuration.nix
+{ pkgs, wrappers, ... }:
+let
+  myHello = wrappers.wrapperModules.hello.apply {
+    inherit pkgs;
+    systemd.serviceConfig.Restart = "always";
+  };
+in {
+  systemd.packages = [ myHello.outputs.systemd-system ];
+  systemd.services.hello.wantedBy = [ "multi-user.target" ];
+}
+```
+
+#### Using in home-manager
+
+For per-user services, link via `xdg.dataFile`:
+
+```nix
+# home.nix
+{ pkgs, wrappers, ... }:
+let
+  myHello = wrappers.wrapperModules.hello.apply {
+    inherit pkgs;
+    systemd.wantedBy = [ "default.target" ];
+    systemd.serviceConfig.Restart = "always";
+  };
+in {
+  xdg.dataFile."systemd/user/hello.service".source =
+    "${myHello.outputs.systemd-user}/systemd/user/hello.service";
+}
 ```
 
 ## alternatives

@@ -87,11 +87,29 @@ in
     ignoreFile = lib.mkOption {
       type = wlib.types.file config.pkgs;
     };
+    extraFiles = lib.mkOption {
+      type = lib.types.listOf (
+        lib.types.submodule {
+          options = {
+            name = lib.mkOption {
+              type = lib.types.nonEmptyStr;
+              description = "File name in the helix config directory";
+            };
+            file = lib.mkOption {
+              type = wlib.types.file config.pkgs;
+              description = "File or path to add in the helix config directory";
+            };
+          };
+        }
+      );
+      default = [ ];
+      description = "Additional files to be placed in the config directory";
+    };
   };
   config.ignoreFile.content = lib.strings.concatLines config.ignores;
   config.package = config.pkgs.helix;
   config.env = {
-    XDG_CONFIG_HOME = builtins.toString (
+    XDG_CONFIG_HOME = toString (
       config.pkgs.linkFarm "helix-merged-config" (
         map
           (a: {
@@ -108,6 +126,10 @@ in
               (entry "ignore" config.ignoreFile.path)
             ]
             ++ themes
+            ++ (map (f: {
+              inherit (f) name;
+              path = f.file.path;
+            }) config.extraFiles)
           )
       )
     );

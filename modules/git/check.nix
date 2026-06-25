@@ -17,6 +17,6 @@ let
 
 in
 pkgs.runCommand "git-test" { } ''
-  "${gitWrapped}/bin/git" --version | grep -q "git"
+  [[ "$(${gitWrapped}/bin/git --version)" == *git* ]]
   touch $out
 ''
