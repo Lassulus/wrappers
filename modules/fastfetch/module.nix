@@ -20,7 +20,7 @@ in
     };
     "config.jsonc" = lib.mkOption {
       type = wlib.types.file config.pkgs;
-      default.path = jsonFmt.generate "fastfetch-config" config.settings;
+      default.path = jsonFmt.generate "fastfetch-config.jsonc" config.settings;
       description = "fastfetch config file";
     };
   };
