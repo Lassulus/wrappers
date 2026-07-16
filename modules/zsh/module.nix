@@ -242,6 +242,7 @@ in
           (lib.optionalString cfg.completion.fuzzySearch ''
             zstyle ':completion:*' menu no
             source ${config.pkgs.zsh-fzf-tab}/share/fzf-tab/fzf-tab.plugin.zsh
+            source ${config.pkgs.fzf-zsh-plugin}/share/zsh/fzf-zsh-plugin/fzf-zsh-plugin.plugin.zsh
           '')
 
           "#Autosuggestions"
@@ -287,9 +288,13 @@ in
 
     ".zshenv" = lib.mkOption {
       type = wlib.types.file config.pkgs;
-      default.content = builtins.concatStringsSep "\n" [
-        (lib.concatMapAttrsStringSep "\n" (k: v: "${k}=${v}") cfg.env)
-      ];
+      default.content =
+        builtins.concatStringsSep "\n" [
+          (lib.concatMapAttrsStringSep "\n" (k: v: "${k}=${v}") cfg.env)
+        ]
+        + (lib.optionalString cfg.integrations.fzf.enable ''
+          path+=(${config.pkgs.fzf-zsh-plugin})
+        '');
     };
   };
 
@@ -300,6 +305,7 @@ in
         ing = cfg.integrations;
       in
       lib.optional ing.fzf.enable ing.fzf.package
+      ++ lib.optional ing.fzf.enable config.pkgs.fzf-zsh-plugin
       ++ lib.optional ing.atuin.enable ing.atuin.package
       ++ lib.optional ing.zoxide.enable ing.zoxide.package
       ++ lib.optional ing.oh-my-posh.enable ing.oh-my-posh.package
