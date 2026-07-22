@@ -5,7 +5,7 @@
   ...
 }:
 let
-  jsonFmt = config.pkgs.formats.json;
+  jsonFmt = config.pkgs.formats.json { };
 in
 {
   _class = "wrapper";
@@ -14,7 +14,7 @@ in
       type = jsonFmt.type;
       default = { };
       description = ''
-        SwayNotificationCenter configuration file. 
+        SwayNotificationCenter configuration file.
         See {manpage}`swaync(5)`
       '';
     };
