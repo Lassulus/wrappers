@@ -6,6 +6,7 @@
 }:
 {
   _class = "wrapper";
+  imports = [ wlib.modules.systemd ];
   options = {
     configFile = lib.mkOption {
       type = wlib.types.file config.pkgs;
@@ -25,6 +26,11 @@
         }
       '';
     };
+    systemdTarget = lib.mkOption {
+      type = lib.types.str;
+      default = "graphical-session.target";
+      description = "Systemd unit to bind to";
+    };
   };
   config.flags = {
     "--config" = "${config.configFile.path}";
@@ -32,4 +38,16 @@
   config.package = config.pkgs.kanshi;
   config.meta.maintainers = [ lib.maintainers.adeci ];
   config.meta.platforms = lib.platforms.linux;
+  config.systemd = {
+    partOf = [ config.systemdTarget ];
+    after = [ config.systemdTarget ];
+    wantedBy = [ config.systemdTarget ];
+    unitConfig.ConditionEnvironment = "WAYLAND_DISPLAY";
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = "${config.exePath} --config ${config.configFile.path}";
+      ExecReload = "${lib.getExe' config.wrapper "kanshictl"} reload";
+      Restart = "always";
+    };
+  };
 }
