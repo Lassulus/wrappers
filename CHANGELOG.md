@@ -27,6 +27,9 @@
   unaffected. See the Styling section of the README.
 - `wlib.applyStyle`: apply one settings module to a set of wrapper modules at
   once, so a single theme can reach every program.
+- `modules/alacritty`: derives colours, font and opacity from `styling` in a
+  separate `styling.nix`, as the worked example of a styled module. Also
+  gains a `check.nix`, which it did not have before.
 - `wlib.style`: base16 scheme parsing (`parseScheme`, `resolveScheme`,
   `slots`) and colour formatting helpers (`withHash`, `toRGB`, `rgbCss`,
   `rgbaCss`, `withAlpha`, `formatNumber`, `luminance`, `isDark`,

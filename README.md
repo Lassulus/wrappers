@@ -541,10 +541,10 @@ A module opts in by deriving settings from `styling`, gated on
       colors.primary.background = withHash styling.colors.background;
       colors.primary.foreground = withHash styling.colors.foreground;
       colors.normal.red = withHash styling.colors.ansi.red;
+
+      window.opacity = styling.opacity.terminal;
     }
   );
-
-  config.extraPackages = lib.mkIf config.styling.enable [ config.styling.fonts.monospace.package ];
 }
 ```
 
@@ -558,6 +558,27 @@ Two rules:
   which is priority 1500, so a plain `config.settings.x = …` from styling lands
   at priority 100 and would silently outrank the user's own value. Defining it
   as a default puts the user back on top.
+
+Fonts are found through fontconfig, not `PATH`, so there is no point adding
+`styling.fonts.*.package` to `extraPackages`. A module only needs the font's
+`name`; users who want a self-contained wrapper turn on
+`styling.fonts.provideFontconfig`.
+
+Styling is usually worth keeping in its own file, pulled in with a plain
+`imports`, so that a module's own configuration stays readable:
+
+```nix
+# modules/<name>/module.nix
+{
+  imports = [ ./styling.nix ];
+  # ...
+}
+```
+
+`modules/alacritty` is the worked example: `styling.nix` derives colours,
+fonts and opacity, and `check.nix` shows how to test a styled module by
+asserting on the generated config rather than on the built wrapper, which
+keeps the check from having to build the program.
 
 ## alternatives
 
