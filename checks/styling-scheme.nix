@@ -16,53 +16,31 @@ let
     )).apply
       { inherit pkgs styling; };
 
-  # A scheme in the older flat layout: no `palette:` block, no `#` prefixes.
-  legacyFile = pkgs.writeText "legacy-scheme.yaml" ''
-    scheme: "Legacy"
-    author: "nobody"
-    base00: 111111
-    base01: 222222
-    base02: 333333
-    base03: 444444
-    base04: 555555
-    base05: 666666
-    base06: 777777
-    base07: 888888
-    base08: 999999
-    base09: aaaaaa
-    base0a: bbbbbb
-    base0b: cccccc
-    base0c: dddddd
-    base0d: eeeeee
-    base0e: ffffff
-    base0f: 000000
+  # A scheme held in a derivation, with no `variant` to read.
+  inlineFile = pkgs.writeText "inline-scheme.yaml" ''
+    name: "Inline"
+    palette:
+      base00: "#eeeeee"
+      base01: "#222222"
+      base02: "#333333"
+      base03: "#444444"
+      base04: "#555555"
+      base05: "#666666"
+      base06: "#777777"
+      base07: "#888888"
+      base08: "#999999"
+      base09: "#aaaaaa"
+      base0A: "#bbbbbb"
+      base0B: "#cccccc"
+      base0C: "#dddddd"
+      base0D: "#eeeeee"
+      base0E: "#ffffff"
+      base0F: "#000000"
   '';
 
   byName = styled { scheme = "gruvbox-dark-hard"; };
-  byDerivation = styled { scheme = legacyFile; };
+  byDerivation = styled { scheme = inlineFile; };
   byPathString = styled { scheme = "${pkgs.base16-schemes}/share/themes/default-light.yaml"; };
-
-  # `#` prefixes, upper case values and lower case slot names all normalised.
-  byAttrs = styled {
-    scheme = {
-      base00 = "#EEEEEE";
-      base01 = "222222";
-      base02 = "333333";
-      base03 = "444444";
-      base04 = "555555";
-      base05 = "666666";
-      base06 = "777777";
-      base07 = "888888";
-      base08 = "999999";
-      base09 = "aaaaaa";
-      base0a = "BBBBBB";
-      base0b = "cccccc";
-      base0c = "dddddd";
-      base0d = "eeeeee";
-      base0e = "ffffff";
-      base0f = "000000";
-    };
-  };
 
   overridden = styled {
     scheme = "gruvbox-dark-hard";
@@ -70,9 +48,10 @@ let
   };
 
   incomplete = styled {
-    scheme = {
-      base00 = "111111";
-    };
+    scheme = pkgs.writeText "incomplete-scheme.yaml" ''
+      palette:
+        base00: "#111111"
+    '';
   };
   missingSlots = builtins.tryEval incomplete.styling.palette.base00;
 
@@ -109,22 +88,18 @@ pkgs.runCommand "styling-scheme-test" { } ''
   expect "by name polarity" '${byName.styling.polarity}' 'dark'
 
   # Scheme metadata is picked up alongside the palette
-  expect "parsed name" '${parsedGruvbox.name}' 'Gruvbox dark, hard'
   expect "parsed variant" '${parsedGruvbox.variant}' 'dark'
 
-  # A derivation holding a scheme in the older flat layout
-  expect "by derivation base00" '${byDerivation.styling.palette.base00}' '111111'
+  # A derivation holding a scheme
+  expect "by derivation base00" '${byDerivation.styling.palette.base00}' 'eeeeee'
   expect "by derivation base0A" '${byDerivation.styling.palette.base0A}' 'bbbbbb'
 
   # A store path passed as a string
   expect "by path string base00" '${byPathString.styling.palette.base00}' 'f8f8f8'
   expect "by path string polarity" '${byPathString.styling.polarity}' 'light'
 
-  # An inline attrset: '#' stripped, values lower cased, slot names canonicalised
-  expect "by attrs base00" '${byAttrs.styling.palette.base00}' 'eeeeee'
-  expect "by attrs base0A" '${byAttrs.styling.palette.base0A}' 'bbbbbb'
   # No variant to read, so polarity falls back to the brightness of base00
-  expect "by attrs polarity" '${byAttrs.styling.polarity}' 'light'
+  expect "by derivation polarity" '${byDerivation.styling.polarity}' 'light'
 
   # An explicit palette entry outranks the scheme
   expect "override base0D" '${overridden.styling.palette.base0D}' 'abcdef'

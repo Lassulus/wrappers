@@ -429,13 +429,12 @@ passing it to a single `apply` works too:
 
 ### Colour scheme
 
-`styling.scheme` accepts the name of any scheme in `pkgs.base16-schemes`, a
-path or derivation holding a base16 YAML file, or an inline attrset:
+`styling.scheme` accepts the name of any scheme in `pkgs.base16-schemes`, or a
+path or derivation holding a base16 YAML file:
 
 ```nix
 styling.scheme = "gruvbox-dark-hard";
 styling.scheme = ./my-scheme.yaml;
-styling.scheme = { base00 = "1d2021"; base01 = "3c3836"; /* ... */ base0F = "d65d0e"; };
 ```
 
 It populates `styling.palette.base00` through `styling.palette.base0F`. Those
@@ -473,7 +472,7 @@ the 16 ANSI terminal colours (`black`, `red`, … `white`, `brightBlack`, …
 | Option | Default | Description |
 |---|---|---|
 | `styling.enable` | `styling.scheme != null` | Whether this wrapper styles itself |
-| `styling.scheme` | `null` | Scheme name, path, derivation, or attrset |
+| `styling.scheme` | `null` | Scheme name, path, or derivation |
 | `styling.palette.base00`–`base0F` | from the scheme | Individual colours |
 | `styling.colors` | derived, read only | Semantic aliases and `colors.ansi` |
 | `styling.polarity` | from the scheme | `"light"` or `"dark"` |
@@ -519,7 +518,9 @@ behaviour. Enabling it without a scheme is fine too — the palette falls back t
 It also exposes `parseScheme`, `resolveScheme` and `slots` for working with
 base16 schemes directly. Scheme loading is pure — a small line based parser
 rather than a YAML tool — so `nix flake check` never needs import from
-derivation.
+derivation. The parser reads the canonical base16 layout, which is what all
+303 schemes in `pkgs.base16-schemes` use; a file spelling a slot as `base0a`
+is reported as missing `base0A`.
 
 ### Adding styling support to a module
 

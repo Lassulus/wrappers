@@ -19,7 +19,7 @@
 
 - `lib/modules/styling.nix`: cross-cutting styling module, imported into
   every wrapper. Provides `styling.scheme` (a base16 scheme by name from
-  `pkgs.base16-schemes`, by path, or inline), `styling.palette`,
+  `pkgs.base16-schemes`, or by path), `styling.palette`,
   `styling.colors` (semantic aliases plus the 16 ANSI colours),
   `styling.polarity`, `styling.fonts`, `styling.opacity` and
   `styling.cursor`. `styling.enable` turns on as soon as a scheme is set and

@@ -25,7 +25,7 @@ let
     )).apply
       {
         inherit pkgs;
-        styling.scheme = probe;
+        styling.palette = probe;
       };
 
   colors = cfg.styling.colors;

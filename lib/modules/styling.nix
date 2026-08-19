@@ -72,16 +72,6 @@ let
     brightWhite = "base07";
   };
 
-  mkColorAlias =
-    slot:
-    lib.mkOption {
-      type = lib.types.str;
-      readOnly = true;
-      default = cfg.palette.${slot};
-      defaultText = lib.literalExpression "config.styling.palette.${slot}";
-      description = "Alias for `styling.palette.${slot}`.";
-    };
-
   mkFont = attr: fontName: {
     package = lib.mkOption {
       type = lib.types.package;
@@ -141,23 +131,17 @@ in
     };
 
     scheme = lib.mkOption {
-      type = lib.types.nullOr (
-        lib.types.oneOf [
-          lib.types.str
-          lib.types.path
-          (lib.types.attrsOf lib.types.str)
-        ]
-      );
+      type = lib.types.nullOr (lib.types.either lib.types.str lib.types.path);
       default = null;
       example = "gruvbox-dark-hard";
       description = ''
         The base16 colour scheme to derive `styling.palette` from.
 
-        Accepts the name of a scheme in `pkgs.base16-schemes`, a path to a
-        base16 YAML file, or an attrset of `base00` to `base0F` colours.
+        Accepts the name of a scheme in `pkgs.base16-schemes` or a path to a
+        base16 YAML file.
 
-        Individual colours can still be adjusted afterwards by setting
-        `styling.palette.<slot>`, which takes precedence over the scheme.
+        Individual colours are set through `styling.palette.<slot>`, which
+        takes precedence over the scheme.
       '';
     };
 
@@ -169,8 +153,18 @@ in
       }
     );
 
-    colors = lib.mapAttrs (_: mkColorAlias) aliases // {
-      ansi = lib.mapAttrs (_: mkColorAlias) ansiAliases;
+    colors = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.either lib.types.str (lib.types.attrsOf lib.types.str));
+      readOnly = true;
+      default = lib.mapAttrs (_: slot: cfg.palette.${slot}) aliases // {
+        ansi = lib.mapAttrs (_: slot: cfg.palette.${slot}) ansiAliases;
+      };
+      defaultText = lib.literalMD "semantic aliases for `styling.palette`, plus `colors.ansi`";
+      description = ''
+        The palette under semantic names, e.g. `colors.background` for
+        `palette.base00`, plus `colors.ansi` holding the standard base16
+        mapping onto the 16 ANSI terminal colours.
+      '';
     };
 
     polarity = lib.mkOption {
