@@ -60,12 +60,7 @@ let
   generateArgsFromFlags =
     flags: flagSeparator:
     lib.concatLists (
-      lib.mapAttrsToList (
-        name: flag:
-        flagToArgs {
-          inherit flagSeparator name flag;
-        }
-      ) flags
+      lib.mapAttrsToList (name: flag: flagToArgs { inherit flagSeparator name flag; }) flags
     );
 
   /**
@@ -213,8 +208,7 @@ let
       # we need to pass pkgs here, because writeText is in pkgs
       pkgs:
       lib.types.submodule (
-        { name, config, ... }:
-        {
+        { name, config, ... }: {
           options = {
             content = lib.mkOption {
               type = lib.types.lines;
@@ -249,9 +243,7 @@ let
         wlib = wrapperLib;
       },
     }:
-    lib.evalModules {
-      inherit modules class specialArgs;
-    };
+    lib.evalModules { inherit modules class specialArgs; };
 
   modules = lib.genAttrs [ "package" "flags" "command" "wrapper" "meta" "systemd" ] (
     name: import ./modules/${name}.nix
@@ -321,48 +313,41 @@ let
     let
       eval = _evalModules {
         modules = [
-          (
-            { config, ... }:
-            {
-              options = {
-                _appliedModules = lib.mkOption {
-                  type = lib.types.listOf lib.types.raw;
-                  internal = true;
-                  default = [ ];
-                  description = ''
-                    Internal option storing the list of modules applied via extend/apply.
-                    Used by extend to re-evaluate with all accumulated modules.
-                  '';
-                };
-                extend = lib.mkOption {
-                  type = lib.types.functionTo lib.types.raw;
-                  description = ''
-                    Function to extend the current configuration with additional settings.
-                    Re-evaluates the configuration with the original modules plus the new settings.
-                  '';
-                  default =
-                    module:
-                    let
-                      allModules = config._appliedModules ++ [ module ];
-                    in
-                    eval.extendModules {
-                      modules = allModules ++ [
-                        { _appliedModules = lib.mkForce allModules; }
-                      ];
-                    };
-                };
-                apply = lib.mkOption {
-                  type = lib.types.functionTo lib.types.raw;
-                  readOnly = true;
-                  description = ''
-                    Function to extend the current configuration with additional modules.
-                    Re-evaluates the configuration with the original settings plus the new module.
-                  '';
-                  default = module: (config.extend module).config;
-                };
+          ({ config, ... }: {
+            options = {
+              _appliedModules = lib.mkOption {
+                type = lib.types.listOf lib.types.raw;
+                internal = true;
+                default = [ ];
+                description = ''
+                  Internal option storing the list of modules applied via extend/apply.
+                  Used by extend to re-evaluate with all accumulated modules.
+                '';
               };
-            }
-          )
+              extend = lib.mkOption {
+                type = lib.types.functionTo lib.types.raw;
+                description = ''
+                  Function to extend the current configuration with additional settings.
+                  Re-evaluates the configuration with the original modules plus the new settings.
+                '';
+                default =
+                  module:
+                  let
+                    allModules = config._appliedModules ++ [ module ];
+                  in
+                  eval.extendModules { modules = allModules ++ [ { _appliedModules = lib.mkForce allModules; } ]; };
+              };
+              apply = lib.mkOption {
+                type = lib.types.functionTo lib.types.raw;
+                readOnly = true;
+                description = ''
+                  Function to extend the current configuration with additional modules.
+                  Re-evaluates the configuration with the original settings plus the new module.
+                '';
+                default = module: (config.extend module).config;
+              };
+            };
+          })
           modules.wrapper
           modules.meta
           wrapperModule
@@ -457,7 +442,10 @@ let
       passthru ? { },
       aliases ? [ ],
       # List of file paths (glob patterns) relative to package root to patch for self-references (e.g., ["bin/*", "lib/*.sh"])
-      filesToPatch ? [ "share/applications/*.desktop" ],
+      filesToPatch ? [
+        "nix-support/*"
+        "share/applications/*.desktop"
+      ],
       # List of file paths (glob patterns) to exclude from the wrapped package (e.g., ["bin/unwanted-*", "share/doc/*"])
       filesToExclude ? [ ],
       patchHook ? "",
@@ -551,43 +539,6 @@ let
                 '') filesToExclude}
               ''}
 
-              # Patch specified files to replace references to the original package with the wrapped one
-              ${lib.optionalString (filesToPatch != [ ]) ''
-                echo "Patching self-references in specified files..."
-                oldPath="${package}"
-                newPath="$out"
-
-                # Process each file pattern
-                ${lib.concatMapStringsSep "\n" (pattern: ''
-                  for file in $out/${pattern}; do
-                    if [[ -L "$file" ]]; then
-                      # It's a symlink, we need to resolve it
-                      target=$(readlink -f "$file")
-
-                      # Check if the file contains the old path
-                      if grep -qF "$oldPath" "$target" 2>/dev/null; then
-                        echo "Patching $file"
-                        # Remove symlink and create a real file with patched content
-                        rm "$file"
-                        # Use replace-literal which works for both text and binary files
-                        substitute "$target" "$file" --replace-fail "$oldPath" "$newPath"
-                        # Preserve permissions
-                        chmod --reference="$target" "$file"
-                      fi
-                    fi
-                  done
-                '') filesToPatch}
-              ''}
-              ${patchHook}
-
-              # Create symlinks for aliases
-              ${lib.optionalString (aliases != [ ] && binName != null) ''
-                mkdir -p $out/bin
-                for alias in ${lib.concatStringsSep " " (map lib.escapeShellArg aliases)}; do
-                  ln -sf ${lib.escapeShellArg binName} $out/bin/$alias
-                done
-              ''}
-
               # Handle additional outputs by symlinking from the original package's outputs
               ${lib.concatMapStringsSep "\n" (
                 output:
@@ -602,6 +553,52 @@ let
                 else
                   ""
               ) outputs}
+
+              # Patch specified files to replace references to the original package with the wrapped one
+              ${lib.optionalString (filesToPatch != [ ]) ''
+                echo "Patching self-references in specified files..."
+                oldPath="${package}"
+                newPath="$out"
+
+                # Process each output
+                ${lib.concatMapStringsSep "\n" (
+                  output:
+                  if originalOutputs ? ${output} && originalOutputs.${output} != null then
+                    ''
+                      # Process each file pattern
+                      ${lib.concatMapStringsSep "\n" (pattern: ''
+                        for file in ${"$" + output}/${pattern}; do
+                          if [[ -L "$file" ]]; then
+                            # It's a symlink, we need to resolve it
+                            target=$(readlink -f "$file")
+
+                            # Check if the file contains the old path
+                            if grep -qF "$oldPath" "$target" 2>/dev/null; then
+                              echo "Patching $file"
+                              # Remove symlink and create a real file with patched content
+                              rm "$file"
+                              # Use replace-literal which works for both text and binary files
+                              substitute "$target" "$file" --replace-fail "$oldPath" "$newPath"
+                              # Preserve permissions
+                              chmod --reference="$target" "$file"
+                            fi
+                          fi
+                        done
+                      '') filesToPatch}
+                    ''
+                  else
+                    ""
+                ) outputs}
+              ''}
+              ${patchHook}
+
+              # Create symlinks for aliases
+              ${lib.optionalString (aliases != [ ] && binName != null) ''
+                mkdir -p $out/bin
+                for alias in ${lib.concatStringsSep " " (map lib.escapeShellArg aliases)}; do
+                  ln -sf ${lib.escapeShellArg binName} $out/bin/$alias
+                done
+              ''}
             '';
 
             inherit passthru meta;
@@ -666,27 +663,12 @@ let
                 postHook
                 aliases
                 ;
-              override =
-                overrideArgs:
-                wrapPackage (
-                  funcArgs
-                  // {
-                    package = package.override overrideArgs;
-                  }
-                );
+              override = overrideArgs: wrapPackage (funcArgs // { package = package.override overrideArgs; });
             };
-          meta =
-            (package.meta or { })
-            // lib.optionalAttrs (binName != null) {
-              mainProgram = binName;
-            };
+          meta = (package.meta or { }) // lib.optionalAttrs (binName != null) { mainProgram = binName; };
         }
-        // lib.optionalAttrs (package ? version) {
-          inherit (package) version;
-        }
-        // lib.optionalAttrs (package ? pname) {
-          inherit (package) pname;
-        }
+        // lib.optionalAttrs (package ? version) { inherit (package) version; }
+        // lib.optionalAttrs (package ? pname) { inherit (package) pname; }
       );
     in
     wrappedPackage;
