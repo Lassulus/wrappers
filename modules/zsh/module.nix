@@ -238,7 +238,7 @@ in
           "# Completion"
           (lib.optionalString cfg.completion.enable cfg.completion.init)
           (lib.optionalString cfg.completion.caseInsensitive "zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}' ")
-          (lib.optionalString cfg.completion.colors "zstyle ':completion:*' list-colors \"$\{(s.:.)LS_COLORS\}\" ")
+          (lib.optionalString cfg.completion.colors "zstyle ':completion:*' list-colors \"$\\{(s.:.)LS_COLORS\\}\" ")
           (lib.optionalString cfg.completion.fuzzySearch ''
             zstyle ':completion:*' menu no
             source ${config.pkgs.zsh-fzf-tab}/share/fzf-tab/fzf-tab.plugin.zsh
