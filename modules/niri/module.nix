@@ -92,14 +92,7 @@ let
         map attrsToKdl (
           lib.mapAttrsToList (n: v: {
             # use the attr name as attribute for the workspace node
-            workspace =
-              if v != null then
-                {
-                  _attrs = n;
-                }
-                // v
-              else
-                n;
+            workspace = if v != null then { _attrs = n; } // v else n;
           }) w
         );
       mkOutputs =
@@ -182,9 +175,7 @@ in
             example = [
               {
                 matches = [ { app-id = ".*"; } ];
-                excludes = [
-                  { app-id = "org.keepassxc.KeePassXC"; }
-                ];
+                excludes = [ { app-id = "org.keepassxc.KeePassXC"; } ];
                 open-focused = false;
                 open-floating = false;
               }

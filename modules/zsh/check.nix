@@ -1,7 +1,4 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 let
   zshWrapped =
     (self.wrapperModules.zsh.apply {

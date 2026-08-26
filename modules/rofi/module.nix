@@ -112,9 +112,7 @@ in
 {
   _class = "wrapper";
   options = {
-    "config.rasi" = lib.mkOption {
-      type = wlib.types.file config.pkgs;
-    };
+    "config.rasi" = lib.mkOption { type = wlib.types.file config.pkgs; };
 
     settings = lib.mkOption {
       type = configType;
@@ -142,9 +140,7 @@ in
     };
   };
   config."config.rasi".content =
-    toRasi {
-      configuration = config.settings;
-    }
+    toRasi { configuration = config.settings; }
     + (lib.optionalString (theme != null) (toRasi {
       "@theme" = theme;
     }));

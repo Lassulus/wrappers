@@ -1,8 +1,4 @@
-{
-  config,
-  lib,
-  ...
-}:
+{ config, lib, ... }:
 
 let
   tomlFmt = config.pkgs.formats.toml { };
@@ -25,9 +21,7 @@ in
     };
 
     meta = {
-      maintainers = [
-        lib.maintainers.dav-wolff
-      ];
+      maintainers = [ lib.maintainers.dav-wolff ];
     };
   };
 }

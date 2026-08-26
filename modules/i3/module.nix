@@ -21,8 +21,6 @@
   };
 
   config.package = config.pkgs.i3;
-  config.meta.maintainers = [
-    lib.maintainers.randomdude
-  ];
+  config.meta.maintainers = [ lib.maintainers.randomdude ];
   config.meta.platforms = lib.platforms.linux;
 }

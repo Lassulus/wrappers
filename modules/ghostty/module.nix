@@ -5,9 +5,7 @@
   ...
 }:
 let
-  kvFmt = config.pkgs.formats.keyValue {
-    listsAsDuplicateKeys = true;
-  };
+  kvFmt = config.pkgs.formats.keyValue { listsAsDuplicateKeys = true; };
 in
 {
   _class = "wrapper";

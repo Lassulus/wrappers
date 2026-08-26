@@ -43,9 +43,7 @@ in
     "--style" = config."style.css".path;
   };
 
-  config.meta.maintainers = [
-    lib.maintainers.randomdude
-  ];
+  config.meta.maintainers = [ lib.maintainers.randomdude ];
   config.meta.platforms = lib.platforms.linux;
 
   config.systemd = {

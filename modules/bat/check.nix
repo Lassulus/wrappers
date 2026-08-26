@@ -1,7 +1,4 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 let
   batWrapped =
     (self.wrapperModules.bat.apply {

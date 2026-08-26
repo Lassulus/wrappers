@@ -1,14 +1,10 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 let
   lib = pkgs.lib;
 
   # Test wrapper module using environment variable path
   testModule = self.lib.wrapModule (
-    { config, wlib, ... }:
-    {
+    { config, wlib, ... }: {
       options = {
         "config.txt" = lib.mkOption {
           type = wlib.types.file config.pkgs;

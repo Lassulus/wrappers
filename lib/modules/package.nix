@@ -1,5 +1,4 @@
-{ lib, ... }:
-{
+{ lib, ... }: {
   _file = "lib/modules/package.nix";
   options = {
     pkgs = lib.mkOption {

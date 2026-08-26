@@ -1,7 +1,4 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 let
   lib = pkgs.lib;
   module.options = {
@@ -26,9 +23,7 @@ let
       module
       { fileWithContent.content = "test content2"; }
       { fileWithPathOverride.path = "/etc/hosts2"; }
-      {
-        fileWithStorePathOverride.path = pkgs.writeText "custom-file2" "custom content2";
-      }
+      { fileWithStorePathOverride.path = pkgs.writeText "custom-file2" "custom content2"; }
     ];
   };
   evaledModuleWithForce = lib.evalModules {
@@ -36,9 +31,7 @@ let
       module
       { fileWithContent.content = lib.mkForce "test content3"; }
       { fileWithPathOverride.path = lib.mkForce "/etc/hosts3"; }
-      {
-        fileWithStorePathOverride.path = lib.mkForce (pkgs.writeText "custom-file3" "custom content3");
-      }
+      { fileWithStorePathOverride.path = lib.mkForce (pkgs.writeText "custom-file3" "custom content3"); }
     ];
   };
   evaledModuleWithDefault = lib.evalModules {

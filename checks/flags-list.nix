@@ -1,7 +1,4 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 
 let
   wrappedWithSpaceSep = self.lib.wrapPackage {

@@ -26,10 +26,6 @@
     "--input-conf" = config."input.conf".path;
     "--include" = config."mpv.conf".path;
   };
-  config.package = (
-    config.pkgs.mpv.override {
-      scripts = config.scripts;
-    }
-  );
+  config.package = (config.pkgs.mpv.override { scripts = config.scripts; });
   config.meta.maintainers = [ lib.maintainers.lassulus ];
 }

@@ -1,13 +1,7 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 
 let
-  nushellWrapped =
-    (self.wrapperModules.nushell.apply {
-      inherit pkgs;
-    }).wrapper;
+  nushellWrapped = (self.wrapperModules.nushell.apply { inherit pkgs; }).wrapper;
 
 in
 pkgs.runCommand "nushell-test" { } ''

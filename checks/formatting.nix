@@ -1,7 +1,4 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 
 pkgs.runCommand "formatting-check" { } ''
   cp -r ${../.}/ src

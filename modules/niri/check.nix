@@ -1,7 +1,4 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 
 let
   niriWrapped =
@@ -27,9 +24,7 @@ let
         window-rules = [
           {
             matches = [ { app-id = ".*"; } ];
-            excludes = [
-              { app-id = "org.keepassxc.KeePassXC"; }
-            ];
+            excludes = [ { app-id = "org.keepassxc.KeePassXC"; } ];
             open-focused = false;
             open-floating = false;
           }

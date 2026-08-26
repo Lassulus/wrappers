@@ -1,7 +1,4 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 
 let
   # Create a dummy package with multiple binaries and other files

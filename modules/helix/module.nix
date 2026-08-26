@@ -84,9 +84,7 @@ in
       type = wlib.types.file config.pkgs;
       default.path = tomlFmt.generate "helix-languages.toml" config.languages;
     };
-    ignoreFile = lib.mkOption {
-      type = wlib.types.file config.pkgs;
-    };
+    ignoreFile = lib.mkOption { type = wlib.types.file config.pkgs; };
     extraFiles = lib.mkOption {
       type = lib.types.listOf (
         lib.types.submodule {

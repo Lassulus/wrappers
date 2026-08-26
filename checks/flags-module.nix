@@ -1,12 +1,8 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 
 let
   helloModule = self.lib.wrapModule (
-    { config, ... }:
-    {
+    { config, ... }: {
       config.package = config.pkgs.hello;
       config.flags = {
         "--greeting" = "world";

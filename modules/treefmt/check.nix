@@ -1,7 +1,4 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 let
   treefmtWrapped =
     (self.wrapperModules.treefmt.apply {

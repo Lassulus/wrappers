@@ -1,15 +1,11 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 
 let
   lib = pkgs.lib;
 
   # Create a wrapper module with a custom option
   customModule = self.lib.wrapModule (
-    { config, ... }:
-    {
+    { config, ... }: {
       options = {
         customGreeting = lib.mkOption {
           type = lib.types.str;
@@ -32,14 +28,11 @@ let
   };
 
   # Test 1: extend returns a module with config, extendModules, etc.
-  extended1 = initialConfig.extend {
-    customGreeting = lib.mkForce "extended";
-  };
+  extended1 = initialConfig.extend { customGreeting = lib.mkForce "extended"; };
 
   # Test 2: Add a new option via extend
   extended2 = initialConfig.extend (
-    { config, ... }:
-    {
+    { config, ... }: {
       options = {
         verboseMode = lib.mkOption {
           type = lib.types.bool;
@@ -53,16 +46,11 @@ let
   );
 
   # Test 3: Use the new option
-  extended3 = extended2.extendModules {
-    modules = [
-      { verboseMode = true; }
-    ];
-  };
+  extended3 = extended2.extendModules { modules = [ { verboseMode = true; } ]; };
 
   # Test 4: Combine custom option changes with new options
   extended4 = initialConfig.extend (
-    { config, ... }:
-    {
+    { config, ... }: {
       options = {
         extraFlag = lib.mkOption {
           type = lib.types.str;
@@ -76,11 +64,7 @@ let
   );
 
   # Test 5: Override the new option
-  extended5 = extended4.extendModules {
-    modules = [
-      { extraFlag = "overridden"; }
-    ];
-  };
+  extended5 = extended4.extendModules { modules = [ { extraFlag = "overridden"; } ]; };
 
 in
 pkgs.runCommand "extend-test" { } ''

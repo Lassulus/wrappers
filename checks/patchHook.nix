@@ -1,7 +1,4 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 
 let
   # Create a dummy package with a desktop file that references itself
@@ -24,19 +21,15 @@ let
   };
 
 in
-pkgs.runCommand "patchHook-test"
-  {
-    wrappedPath = "${wrappedPackage}";
-  }
-  ''
-    echo "Testing patchHook functionality..."
-    echo "Wrapped package path: $wrappedPath"
+pkgs.runCommand "patchHook-test" { wrappedPath = "${wrappedPackage}"; } ''
+  echo "Testing patchHook functionality..."
+  echo "Wrapped package path: $wrappedPath"
 
-    if [ ! -f "$wrappedPath/test" ]; then
-      echo "FAIL: file not created in patched package"
-      exit 1
-    fi
+  if [ ! -f "$wrappedPath/test" ]; then
+    echo "FAIL: file not created in patched package"
+    exit 1
+  fi
 
-    echo "SUCCESS: patchHook executed correctly"
-    touch $out
-  ''
+  echo "SUCCESS: patchHook executed correctly"
+  touch $out
+''

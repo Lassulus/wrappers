@@ -118,9 +118,7 @@ in
 
     importantPrefixes = lib.mkOption {
       type = with lib.types; listOf str;
-      default = [
-        "$"
-      ];
+      default = [ "$" ];
 
       description = ''
         List of important prefixes to source at the top of the config.
@@ -161,9 +159,7 @@ in
     };
 
   config.package = config.pkgs.hypridle;
-  config.filesToPatch = [
-    "share/systemd/user/hypridle.service"
-  ];
+  config.filesToPatch = [ "share/systemd/user/hypridle.service" ];
 
   config.meta.platforms = lib.platforms.linux;
 

@@ -1,12 +1,10 @@
-{ lib, ... }:
-{
+{ lib, ... }: {
   _file = "lib/modules/meta.nix";
   options.meta = {
     maintainers = lib.mkOption {
       type = lib.types.listOf (
         lib.types.submodule (
-          { name, ... }:
-          {
+          { name, ... }: {
             options = {
               name = lib.mkOption {
                 type = lib.types.str;
