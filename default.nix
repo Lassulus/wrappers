@@ -7,7 +7,5 @@ let
 in
 {
   lib = wlib;
-  wrapperModules = import ./modules.nix {
-    inherit lib wlib;
-  };
+  wrapperModules = import ./modules.nix { inherit lib wlib; };
 }

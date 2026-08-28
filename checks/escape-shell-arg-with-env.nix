@@ -1,7 +1,4 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 let
   lib = pkgs.lib;
   escape = self.lib.escapeShellArgWithEnv;

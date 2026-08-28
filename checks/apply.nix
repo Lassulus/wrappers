@@ -1,18 +1,10 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 
 let
   # Create a simple wrapper module
   helloModule = self.lib.wrapModule (
-    { config, lib, ... }:
-    {
-      options.test = lib.mkOption {
-        type = lib.types.submodule {
-          freeformType = lib.types.attrs;
-        };
-      };
+    { config, lib, ... }: {
+      options.test = lib.mkOption { type = lib.types.submodule { freeformType = lib.types.attrs; }; };
       config.package = config.pkgs.hello;
       config.flags = {
         "--ff" = config.test.freeform;
@@ -30,8 +22,7 @@ let
 
   # Extend the configuration
   extendedConfig = initialConfig.apply (
-    { lib, ... }:
-    {
+    { lib, ... }: {
       test.freeform = "freeform2";
       flags."--greeting" = "extended";
       flags."--extra" = "flag";
@@ -40,8 +31,7 @@ let
 
   # Test mkForce to override a value
   forcedConfig = initialConfig.apply (
-    { lib, ... }:
-    {
+    { lib, ... }: {
       flags."--greeting" = lib.mkForce "forced";
       flags."--forced-flag" = true;
     }
@@ -54,16 +44,14 @@ let
 
   # Test chaining apply multiple levels deep
   doubleApply = extendedConfig.apply (
-    { lib, ... }:
-    {
+    { lib, ... }: {
       flags."--greeting" = lib.mkOverride 90 "double";
       flags."--double" = "level2";
     }
   );
 
   tripleApply = doubleApply.apply (
-    { lib, ... }:
-    {
+    { lib, ... }: {
       flags."--greeting" = lib.mkOverride 80 "triple";
       flags."--triple" = "level3";
     }

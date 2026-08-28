@@ -1,23 +1,14 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 
 let
   # Test 1: Default platforms (should be lib.platforms.all)
-  helloModuleDefault = self.lib.wrapModule (
-    { config, ... }:
-    {
-      config.package = config.pkgs.hello;
-    }
-  );
+  helloModuleDefault = self.lib.wrapModule ({ config, ... }: { config.package = config.pkgs.hello; });
 
   moduleConfigDefault = helloModuleDefault.apply { inherit pkgs; };
 
   # Test 2: Custom platforms (linux only)
   helloModuleLinux = self.lib.wrapModule (
-    { config, ... }:
-    {
+    { config, ... }: {
       config.package = config.pkgs.hello;
       config.meta.platforms = pkgs.lib.platforms.linux;
     }
@@ -27,8 +18,7 @@ let
 
   # Test 3: Specific platforms list
   helloModuleSpecific = self.lib.wrapModule (
-    { config, ... }:
-    {
+    { config, ... }: {
       config.package = config.pkgs.hello;
       config.meta.platforms = [
         "x86_64-linux"

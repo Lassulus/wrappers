@@ -23,9 +23,7 @@
     };
 
     meta = {
-      maintainers = [
-        lib.maintainers.dav-wolff
-      ];
+      maintainers = [ lib.maintainers.dav-wolff ];
     };
   };
 }

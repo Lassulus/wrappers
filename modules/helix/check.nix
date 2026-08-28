@@ -1,13 +1,7 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 
 let
-  helixWrapped =
-    (self.wrapperModules.helix.apply {
-      inherit pkgs;
-    }).wrapper;
+  helixWrapped = (self.wrapperModules.helix.apply { inherit pkgs; }).wrapper;
 
 in
 pkgs.runCommand "helix-test" { } ''

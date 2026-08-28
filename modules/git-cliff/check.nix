@@ -1,7 +1,4 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 let
   gitCliffWrapped =
     (self.wrapperModules.git-cliff.apply {

@@ -1,15 +1,11 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 
 let
   # Test with a nixpkgs maintainer (lassulus)
   nixpkgsMaintainer = pkgs.lib.maintainers.lassulus;
 
   helloModule = self.lib.wrapModule (
-    { config, ... }:
-    {
+    { config, ... }: {
       config.package = config.pkgs.hello;
       config.meta.maintainers = [ nixpkgsMaintainer ];
     }

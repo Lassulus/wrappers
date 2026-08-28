@@ -1,7 +1,4 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 let
   ghWrapped =
     (self.wrapperModules.gh.apply {

@@ -1,7 +1,4 @@
-{
-  pkgs,
-  self,
-}:
+{ pkgs, self }:
 let
   waybarWrapped =
     (self.wrapperModules.waybar.apply {

@@ -289,9 +289,7 @@ in
     ".zshenv" = lib.mkOption {
       type = wlib.types.file config.pkgs;
       default.content =
-        builtins.concatStringsSep "\n" [
-          (lib.concatMapAttrsStringSep "\n" (k: v: "${k}=${v}") cfg.env)
-        ]
+        builtins.concatStringsSep "\n" [ (lib.concatMapAttrsStringSep "\n" (k: v: "${k}=${v}") cfg.env) ]
         + (lib.optionalString cfg.integrations.fzf.enable ''
           path+=(${config.pkgs.fzf-zsh-plugin})
         '');
