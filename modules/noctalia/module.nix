@@ -25,8 +25,7 @@ in
   };
 
   config = {
-    # package needs to be specified manually
-    # package = ...
+    package = config.pkgs.noctalia or { };
     env = {
       NOCTALIA_CONFIG_HOME = toString (
         config.pkgs.linkFarm "noctalia-config" [
