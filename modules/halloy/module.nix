@@ -64,7 +64,7 @@ in
       maintainers = [
         {
           name = "holly";
-          github = "hollymlem";
+          github = "aquifolly";
           githubId = 35699052;
         }
       ];
