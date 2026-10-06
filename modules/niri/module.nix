@@ -34,13 +34,10 @@ let
       # surround strings with quotes
       toVal =
         let
-          escape = lib.escape [
-            "\n"
-            "\\"
-            "\r"
-            "\t"
-            "\""
-          ];
+          escape =
+            builtins.replaceStrings
+              [ ''"'' "/" ''\'' "\n" "\r" "\t" ]
+              [ ''\"'' ''\/'' ''\\'' ''\n'' ''\r'' ''\t'' ];
         in
         v:
         if lib.isString v then
